@@ -584,6 +584,27 @@
 
     const charts = {};
 
+    let cachedXlsxLib = null;
+
+    function getXlsxLib() {
+      if (cachedXlsxLib) return cachedXlsxLib;
+      if (typeof XLSX !== 'undefined') {
+        cachedXlsxLib = XLSX;
+        return cachedXlsxLib;
+      }
+      if (typeof window !== 'undefined' && window.XLSX) {
+        cachedXlsxLib = window.XLSX;
+        return cachedXlsxLib;
+      }
+      if (typeof globalThis !== 'undefined' && globalThis.XLSX) {
+        cachedXlsxLib = globalThis.XLSX;
+        return cachedXlsxLib;
+      }
+      throw new Error(
+        'Spreadsheet parser unavailable. Ensure the XLSX library is accessible (check network connectivity or content security policy).'
+      );
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       const fileInput = document.getElementById('fileInput');
       const resetButton = document.getElementById('resetButton');
@@ -748,7 +769,8 @@
           try {
             const arrayBuffer = event.target.result;
             const data = new Uint8Array(arrayBuffer);
-            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+            const xlsx = getXlsxLib();
+            const workbook = xlsx.read(data, { type: 'array', cellDates: true });
             resolve({ fileName: file.name, workbook });
           } catch (err) {
             const reason = err && err.message ? err.message : 'Unknown error';
@@ -821,13 +843,15 @@
         },
       };
 
+      const xlsx = getXlsxLib();
+
       workbooks.forEach(({ fileName, workbook }) => {
         workbook.SheetNames.forEach((sheetName) => {
           const sheet = workbook.Sheets[sheetName];
           if (!sheet || typeof sheet !== 'object' || !sheet['!ref']) return;
           let rows = [];
           try {
-            rows = XLSX.utils.sheet_to_json(sheet, { defval: null, raw: false });
+            rows = xlsx.utils.sheet_to_json(sheet, { defval: null, raw: false });
           } catch (sheetError) {
             const reason = sheetError && sheetError.message ? sheetError.message : 'unexpected format';
             base.meta.warnings.push(`Skipped worksheet "${sheetName}" in ${fileName}: ${reason}`);
