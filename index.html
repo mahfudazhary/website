@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8' />
+  <meta http-equiv='X-UA-Compatible' content='IE=edge' />
+  <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+  <title>RVTools Export Analyzer</title>
+  <link rel='preconnect' href='https://fonts.googleapis.com' />
+  <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin />
+  <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet' />
+  <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js' integrity='sha384-z+evsV21KD2yg4KKmaOQZeqpdvFGFqH2BbRkTSaprPS0Bgdn4l2GcNw3nb+VHLa8' crossorigin='anonymous'></script>
+  <script src='https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js' integrity='sha384-oFNxXHrpQ5YbyNjzqM7ZcSBG6A99iVVXSSPE78R4G95ChF2eGscSwl6zGyF/F7Ai' crossorigin='anonymous'></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0f172a;
+      --card-bg: rgba(15, 23, 42, 0.8);
+      --card-border: rgba(148, 163, 184, 0.2);
+      --accent: #38bdf8;
+      --accent-strong: #0ea5e9;
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --danger: #f87171;
+      --shadow: 0 20px 40px rgba(15, 23, 42, 0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at top left, #1e293b, #020617);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    header {
+      padding: clamp(1.5rem, 5vw, 3rem) clamp(1.5rem, 5vw, 3rem) 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: clamp(1.75rem, 4vw, 2.75rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #f8fafc;
+    }
+
+    header p {
+      margin: 0;
+      max-width: 60ch;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .page {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 clamp(1.5rem, 5vw, 3rem) clamp(2rem, 5vw, 3.5rem);
+    }
+
+    .uploader {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: clamp(1.5rem, 4vw, 2.5rem);
+      display: grid;
+      gap: 1.25rem;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .uploader::before {
+      content: '';
+      position: absolute;
+      inset: -20% 30% 60% -30%;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.25), transparent 70%);
+      pointer-events: none;
+    }
+    .uploader label {
+      font-weight: 600;
+      font-size: 1.05rem;
+    }
+
+    .uploader .hint {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    .file-input-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    input[type='file'] {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px dashed rgba(148, 163, 184, 0.4);
+      border-radius: 12px;
+      padding: 0.75rem 1rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      max-width: 100%;
+    }
+
+    input[type='file']:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    button {
+      background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+      color: #0f172a;
+      border: none;
+      border-radius: 999px;
+      padding: 0.65rem 1.4rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 10px 25px rgba(14, 165, 233, 0.25);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 30px rgba(14, 165, 233, 0.35);
+    }
+
+    button.secondary {
+      background: rgba(148, 163, 184, 0.15);
+      color: var(--text-secondary);
+      box-shadow: none;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.75rem;
+      background: rgba(148, 163, 184, 0.15);
+      border-radius: 999px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .summary-card {
+      background: rgba(15, 23, 42, 0.7);
+      border-radius: 16px;
+      padding: 1.25rem;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      display: grid;
+      gap: 0.25rem;
+      min-height: 120px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .summary-card::after {
+      content: '';
+      position: absolute;
+      inset: auto -40% -40% auto;
+      width: 140px;
+      height: 140px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.18), transparent 70%);
+      pointer-events: none;
+      transform: rotate(25deg);
+    }
+
+    .summary-card span {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .summary-card strong {
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .dashboard-grid {
+      margin-top: 2.5rem;
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .dashboard-grid .row {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 18px;
+      padding: 1.5rem;
+      border: 1px solid var(--card-border);
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 1.25rem;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 1.3rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .card h2 span {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .insight-list {
+      margin: 0;
+      padding-left: 1.1rem;
+      color: var(--text-secondary);
+      display: grid;
+      gap: 0.4rem;
+    }
+
+    .insight-list li::marker {
+      color: var(--accent);
+    }
+
+    .insight-list li strong {
+      color: var(--text-primary);
+    }
+
+    .chart-wrapper {
+      position: relative;
+      width: 100%;
+      min-height: 220px;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .empty-state {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      padding: 1rem;
+      opacity: 0.8;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .loading-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .loading-indicator::before {
+      content: '';
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(56, 189, 248, 0.35);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .table-wrapper {
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      background: rgba(15, 23, 42, 0.35);
+    }
+
+    thead {
+      background: rgba(56, 189, 248, 0.12);
+      color: #e0f2fe;
+    }
+
+    th,
+    td {
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+      text-align: left;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      border-radius: 999px;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.75rem;
+      text-transform: capitalize;
+    }
+
+    .pill.success {
+      background: rgba(52, 211, 153, 0.15);
+      color: var(--success);
+    }
+
+    .pill.warning {
+      background: rgba(251, 191, 36, 0.18);
+      color: var(--warning);
+    }
+
+    .pill.danger {
+      background: rgba(248, 113, 113, 0.18);
+      color: var(--danger);
+    }
+
+    .error-banner {
+      background: rgba(248, 113, 113, 0.18);
+      border: 1px solid rgba(248, 113, 113, 0.35);
+      color: #fecaca;
+      padding: 0.85rem 1rem;
+      border-radius: 12px;
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding: 1.5rem 0 2.5rem;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 768px) {
+      .card h2 {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .file-input-group {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      header p {
+        max-width: unset;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class='page'>
+    <header>
+      <span class='badge'>RVTools Analytics Workspace</span>
+      <h1>RVTools Export Analyzer</h1>
+      <p>Upload one or more RVTools exports (XLSX or CSV) to instantly explore availability, manageability, performance, recoverability, security, and cost indicators for your vSphere estate. Data never leaves your browser.</p>
+    </header>
+
+    <section class='uploader' aria-labelledby='uploader-label'>
+      <div>
+        <label id='uploader-label' for='fileInput'>Select RVTools export files</label>
+        <p class='hint'>Supports multiple files. Drop the standard RVTools XLSX export or CSV outputs to blend results across environments.</p>
+      </div>
+      <div class='file-input-group'>
+        <input id='fileInput' type='file' accept='.xlsx,.xls,.csv' multiple />
+        <button type='button' id='resetButton' class='secondary'>Reset dashboard</button>
+        <span id='loadingIndicator' class='loading-indicator hidden'>Crunching telemetry</span>
+      </div>
+      <div id='errorBanner' class='error-banner hidden' role='alert'></div>
+      <div class='hint'>Processed files: <span id='fileList'>None</span></div>
+    </section>
+
+    <section class='summary-grid' aria-live='polite'>
+      <article class='summary-card'>
+        <span>Total files</span>
+        <strong id='summary-files'>0</strong>
+      </article>
+      <article class='summary-card'>
+        <span>Total VMs</span>
+        <strong id='summary-vms'>0</strong>
+      </article>
+      <article class='summary-card'>
+        <span>Powered on</span>
+        <strong id='summary-powered-on'>0</strong>
+      </article>
+      <article class='summary-card'>
+        <span>Powered off / suspended</span>
+        <strong id='summary-powered-off'>0</strong>
+      </article>
+      <article class='summary-card'>
+        <span>Avg CPU usage (%)</span>
+        <strong id='summary-cpu'>0%</strong>
+      </article>
+      <article class='summary-card'>
+        <span>Estimated monthly cost</span>
+        <strong id='summary-cost'>$0</strong>
+      </article>
+    </section>
+
+    <section class='dashboard-grid'>
+      <div class='row'>
+        <article class='card' id='availability-card'>
+          <h2>
+            Availability
+            <span>Power state and host resiliency</span>
+          </h2>
+          <ul class='insight-list' id='availability-insights'></ul>
+          <div class='chart-wrapper'>
+            <canvas id='availabilityChart' aria-label='Availability distribution chart'></canvas>
+            <p id='availabilityEmpty' class='empty-state hidden'>No power state data found.</p>
+          </div>
+        </article>
+        <article class='card' id='manageability-card'>
+          <h2>
+            Manageability
+            <span>VMware Tools and configuration drift</span>
+          </h2>
+          <ul class='insight-list' id='manageability-insights'></ul>
+          <div class='chart-wrapper'>
+            <canvas id='manageabilityChart' aria-label='Manageability status chart'></canvas>
+            <p id='manageabilityEmpty' class='empty-state hidden'>No VMware Tools status detected.</p>
+          </div>
+        </article>
+      </div>
+      <div class='row'>
+        <article class='card' id='performance-card'>
+          <h2>
+            Performance
+            <span>Resource consumption signals</span>
+          </h2>
+          <ul class='insight-list' id='performance-insights'></ul>
+          <div class='chart-wrapper'>
+            <canvas id='performanceChart' aria-label='Performance summary chart'></canvas>
+            <p id='performanceEmpty' class='empty-state hidden'>No CPU or memory utilization metrics detected.</p>
+          </div>
+          <div class='table-wrapper' id='performanceTableWrapper'>
+            <table aria-label='Top virtual machines by performance metrics'>
+              <thead>
+                <tr>
+                  <th scope='col'>VM</th>
+                  <th scope='col'>CPU %</th>
+                  <th scope='col'>CPU MHz</th>
+                  <th scope='col'>Memory GB</th>
+                </tr>
+              </thead>
+              <tbody id='performanceTableBody'></tbody>
+            </table>
+          </div>
+        </article>
+        <article class='card' id='recoverability-card'>
+          <h2>
+            Recoverability
+            <span>Snapshot hygiene</span>
+          </h2>
+          <ul class='insight-list' id='recoverability-insights'></ul>
+          <div class='chart-wrapper'>
+            <canvas id='recoverabilityChart' aria-label='Snapshot age distribution chart'></canvas>
+            <p id='recoverabilityEmpty' class='empty-state hidden'>No snapshot information supplied.</p>
+          </div>
+          <div class='table-wrapper' id='snapshotTableWrapper'>
+            <table aria-label='Virtual machines with the oldest snapshots'>
+              <thead>
+                <tr>
+                  <th scope='col'>VM</th>
+                  <th scope='col'>Snapshots</th>
+                  <th scope='col'>Oldest (days)</th>
+                  <th scope='col'>Newest snapshot</th>
+                </tr>
+              </thead>
+              <tbody id='snapshotTableBody'></tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+      <div class='row'>
+        <article class='card' id='security-card'>
+          <h2>
+            Security
+            <span>Hardware version & guest OS posture</span>
+          </h2>
+          <ul class='insight-list' id='security-insights'></ul>
+          <div class='chart-wrapper'>
+            <canvas id='securityChart' aria-label='Virtual hardware version chart'></canvas>
+            <p id='securityEmpty' class='empty-state hidden'>No hardware version metadata detected.</p>
+          </div>
+        </article>
+        <article class='card' id='cost-card'>
+          <h2>
+            Cost
+            <span>Resource footprint estimates</span>
+          </h2>
+          <ul class='insight-list' id='cost-insights'></ul>
+          <div class='chart-wrapper'>
+            <canvas id='costChart' aria-label='Cost breakdown chart'></canvas>
+            <p id='costEmpty' class='empty-state hidden'>No CPU, RAM, or storage capacity discovered.</p>
+          </div>
+        </article>
+      </div>
+
+      <article class='card' id='health-card'>
+        <h2>
+          Operational health signals
+          <span>Findings from the vHealth worksheet</span>
+        </h2>
+        <div class='table-wrapper'>
+          <table aria-label='Operational health findings from RVTools'>
+            <thead>
+              <tr>
+                <th scope='col'>Category</th>
+                <th scope='col'>Finding</th>
+                <th scope='col'>VM / Object</th>
+              </tr>
+            </thead>
+            <tbody id='healthTableBody'></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  </div>
+
+  <footer>
+    Built for rapid offline analysis of RVTools exports. No data is uploaded or stored.
+  </footer>
+  <script>
+    const COST_RATES = {
+      vcpu: 15,
+      ramGB: 7,
+      storageGB: 0.12,
+    };
+
+    const charts = {};
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const fileInput = document.getElementById('fileInput');
+      const resetButton = document.getElementById('resetButton');
+
+      fileInput.addEventListener('change', handleFileInput);
+      resetButton.addEventListener('click', () => {
+        fileInput.value = '';
+        clearDashboard();
+      });
+
+      clearDashboard();
+    });
+
+    function showError(message) {
+      const errorBanner = document.getElementById('errorBanner');
+      if (!message) {
+        errorBanner.classList.add('hidden');
+        errorBanner.textContent = '';
+        return;
+      }
+      errorBanner.textContent = message;
+      errorBanner.classList.remove('hidden');
+    }
+
+    function toggleLoading(isLoading) {
+      const indicator = document.getElementById('loadingIndicator');
+      if (isLoading) {
+        indicator.classList.remove('hidden');
+      } else {
+        indicator.classList.add('hidden');
+      }
+    }
+
+    function clearDashboard() {
+      showError('');
+      toggleLoading(false);
+
+      const summaryDefaults = {
+        'summary-files': '0',
+        'summary-vms': '0',
+        'summary-powered-on': '0',
+        'summary-powered-off': '0',
+        'summary-cpu': '0%',
+        'summary-cost': '$0',
+      };
+
+      Object.entries(summaryDefaults).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.textContent = value;
+        }
+      });
+
+      document.getElementById('fileList').textContent = 'None';
+
+      const lists = [
+        'availability-insights',
+        'manageability-insights',
+        'performance-insights',
+        'recoverability-insights',
+        'security-insights',
+        'cost-insights',
+      ];
+
+      lists.forEach((id) => {
+        const list = document.getElementById(id);
+        if (list) {
+          list.innerHTML = '<li>No insights yet. Upload RVTools exports to begin.</li>';
+        }
+      });
+
+      ['performanceTableBody', 'snapshotTableBody', 'healthTableBody'].forEach((id) => {
+        const tbody = document.getElementById(id);
+        if (tbody) {
+          tbody.innerHTML = '';
+        }
+      });
+
+      Object.values(charts).forEach((chart) => {
+        if (chart) {
+          chart.destroy();
+        }
+      });
+
+      ['availabilityChart', 'manageabilityChart', 'performanceChart', 'recoverabilityChart', 'securityChart', 'costChart'].forEach((id) => {
+        const canvas = document.getElementById(id);
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      });
+
+      ['availabilityEmpty', 'manageabilityEmpty', 'performanceEmpty', 'recoverabilityEmpty', 'securityEmpty', 'costEmpty'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.classList.remove('hidden');
+        }
+      });
+    }
+    async function handleFileInput(event) {
+      const files = Array.from(event.target.files || []);
+      if (!files.length) {
+        clearDashboard();
+        return;
+      }
+
+      toggleLoading(true);
+      showError('');
+
+      try {
+        const parsed = await Promise.all(files.map(readWorkbook));
+        const analysis = analyseWorkbooks(parsed);
+        renderDashboard(analysis);
+      } catch (error) {
+        console.error(error);
+        showError('Unable to parse one or more files. Please confirm you selected a valid RVTools export.');
+      } finally {
+        toggleLoading(false);
+      }
+    }
+
+    function readWorkbook(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('Unable to read file'));
+        reader.onload = (event) => {
+          try {
+            const arrayBuffer = event.target.result;
+            const data = new Uint8Array(arrayBuffer);
+            const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+            resolve({ fileName: file.name, workbook });
+          } catch (err) {
+            reject(err);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    function analyseWorkbooks(workbooks) {
+      const vmRecords = {};
+      const healthFindings = [];
+
+      const base = {
+        meta: {
+          files: workbooks.map((wb) => wb.fileName),
+          totalVMs: 0,
+        },
+        availability: {
+          powerStates: {},
+        },
+        manageability: {
+          toolsStatus: {},
+        },
+        performance: {
+          cpuPercentSum: 0,
+          cpuPercentSamples: 0,
+          cpuMhzSum: 0,
+          cpuMhzSamples: 0,
+          memoryUsageSumGB: 0,
+          memoryUsageSamples: 0,
+          memoryProvisionedSumGB: 0,
+          storageUsedSumGB: 0,
+        },
+        recoverability: {
+          totalSnapshots: 0,
+          distribution: { lt7: 0, lt30: 0, gte30: 0 },
+          oldestSnapshot: null,
+          snapshotDetails: [],
+        },
+        security: {
+          hardwareVersions: {},
+          guestOS: {},
+          flaggedVMs: [],
+        },
+        cost: {
+          totalvCPU: 0,
+          totalMemoryGB: 0,
+          totalStorageGB: 0,
+          breakdown: { cpu: 0, ram: 0, storage: 0 },
+          estimatedMonthly: 0,
+        },
+        insights: {
+          availability: [],
+          manageability: [],
+          performance: [],
+          recoverability: [],
+          security: [],
+          cost: [],
+        },
+      };
+
+      workbooks.forEach(({ fileName, workbook }) => {
+        workbook.SheetNames.forEach((sheetName) => {
+          const sheet = workbook.Sheets[sheetName];
+          if (!sheet) return;
+          const rows = XLSX.utils.sheet_to_json(sheet, { defval: null, raw: false });
+          rows.forEach((row) => {
+            processRow({
+              row,
+              sheetName,
+              source: fileName,
+              vmRecords,
+              healthFindings,
+            });
+          });
+        });
+      });
+
+      const vmList = Object.values(vmRecords);
+      base.meta.totalVMs = vmList.length;
+
+      vmList.forEach((vm) => {
+        if (vm.powerState) {
+          const normalized = normalizePowerState(vm.powerState);
+          base.availability.powerStates[normalized] = (base.availability.powerStates[normalized] || 0) + 1;
+        }
+
+        if (vm.toolsStatus) {
+          const normalized = normalizeToolsStatus(vm.toolsStatus);
+          base.manageability.toolsStatus[normalized] = (base.manageability.toolsStatus[normalized] || 0) + 1;
+        }
+
+        if (isFinite(vm.cpuUsagePercent)) {
+          base.performance.cpuPercentSum += vm.cpuUsagePercent;
+          base.performance.cpuPercentSamples += 1;
+        }
+
+        if (isFinite(vm.cpuUsageMhz)) {
+          base.performance.cpuMhzSum += vm.cpuUsageMhz;
+          base.performance.cpuMhzSamples += 1;
+        }
+
+        if (isFinite(vm.memoryUsageGB)) {
+          base.performance.memoryUsageSumGB += vm.memoryUsageGB;
+          base.performance.memoryUsageSamples += 1;
+        }
+
+        if (isFinite(vm.memoryProvisionedGB)) {
+          base.performance.memoryProvisionedSumGB += vm.memoryProvisionedGB;
+        }
+
+        if (isFinite(vm.storageUsedGB)) {
+          base.performance.storageUsedSumGB += vm.storageUsedGB;
+        }
+
+        if (Array.isArray(vm.snapshots) && vm.snapshots.length) {
+          base.recoverability.totalSnapshots += vm.snapshots.length;
+          const sorted = vm.snapshots
+            .map((snapshot) => ({
+              name: snapshot.name,
+              ageDays: deriveSnapshotAge(snapshot),
+              created: snapshot.created,
+            }))
+            .filter((item) => isFinite(item.ageDays));
+
+          if (sorted.length) {
+            const oldest = sorted.reduce((max, current) => (current.ageDays > max.ageDays ? current : max), sorted[0]);
+            if (!base.recoverability.oldestSnapshot || oldest.ageDays > base.recoverability.oldestSnapshot.ageDays) {
+              base.recoverability.oldestSnapshot = {
+                vm: vm.name,
+                ...oldest,
+              };
+            }
+
+            sorted.forEach((snapshot) => {
+              if (snapshot.ageDays < 7) base.recoverability.distribution.lt7 += 1;
+              else if (snapshot.ageDays < 30) base.recoverability.distribution.lt30 += 1;
+              else base.recoverability.distribution.gte30 += 1;
+            });
+
+            base.recoverability.snapshotDetails.push({
+              vm: vm.name,
+              count: vm.snapshots.length,
+              oldest: Math.max(...sorted.map((s) => s.ageDays)),
+              newest: sorted.reduce((min, s) => (s.created && (!min || s.created > min) ? s.created : min), null),
+            });
+          }
+        }
+
+        if (vm.hardwareVersion) {
+          const versionLabel = vm.hardwareVersion.toString().trim();
+          base.security.hardwareVersions[versionLabel] = (base.security.hardwareVersions[versionLabel] || 0) + 1;
+          const versionNumber = extractVersionNumber(versionLabel);
+          if (versionNumber && versionNumber < 13) {
+            base.security.flaggedVMs.push(`${vm.name} (HW v${versionNumber})`);
+          }
+        }
+
+        if (vm.guestOS) {
+          const label = vm.guestOS.toString().trim();
+          base.security.guestOS[label] = (base.security.guestOS[label] || 0) + 1;
+        }
+
+        if (isFinite(vm.vcpu)) {
+          base.cost.totalvCPU += vm.vcpu;
+        }
+
+        if (isFinite(vm.memoryProvisionedGB)) {
+          base.cost.totalMemoryGB += vm.memoryProvisionedGB;
+        }
+
+        if (isFinite(vm.storageProvisionedGB)) {
+          base.cost.totalStorageGB += vm.storageProvisionedGB;
+        }
+      });
+
+      base.cost.breakdown.cpu = base.cost.totalvCPU * COST_RATES.vcpu;
+      base.cost.breakdown.ram = base.cost.totalMemoryGB * COST_RATES.ramGB;
+      base.cost.breakdown.storage = base.cost.totalStorageGB * COST_RATES.storageGB;
+      base.cost.estimatedMonthly = base.cost.breakdown.cpu + base.cost.breakdown.ram + base.cost.breakdown.storage;
+
+      base.insights = buildInsights({ base, vmList, healthFindings });
+
+      base.performance.topVMs = computeTopVms(vmList);
+      base.recoverability.snapshotDetails.sort((a, b) => (b.oldest || 0) - (a.oldest || 0));
+      base.healthFindings = healthFindings;
+
+      return base;
+    }
+    function processRow({ row, sheetName, source, vmRecords, healthFindings }) {
+      const lowerSheet = (sheetName || '').toLowerCase();
+      const vmField = findField(row, ['vm name', 'virtual machine', 'vm']);
+      const vmName = vmField ? String(vmField.value).trim() : null;
+      let vmRecord = null;
+
+      if (vmName) {
+        vmRecord = vmRecords[vmName] || { name: vmName, sources: new Set() };
+        vmRecord.sources.add(source);
+        vmRecords[vmName] = vmRecord;
+      }
+
+      if (lowerSheet.includes('health')) {
+        const categoryField = findField(row, ['category']);
+        const findingField = findField(row, ['message', 'finding', 'issue']);
+        const objectField = vmField || findField(row, ['object', 'target']);
+        if (categoryField || findingField) {
+          healthFindings.push({
+            category: categoryField ? String(categoryField.value) : 'General',
+            finding: findingField ? String(findingField.value) : 'Finding',
+            object: objectField ? String(objectField.value) : '',
+          });
+        }
+      }
+
+      if (!vmRecord) {
+        return;
+      }
+
+      const powerState = findField(row, ['powerstate', 'power state', 'runtime power state']);
+      if (powerState) {
+        vmRecord.powerState = powerState.value;
+      }
+
+      const toolsStatus = findField(row, ['tools status', 'vmware tools status', 'vmware tools version status']);
+      if (toolsStatus) {
+        vmRecord.toolsStatus = toolsStatus.value;
+      }
+
+      const hardwareVersion = findField(row, ['hardware version', 'vm version']);
+      if (hardwareVersion) {
+        vmRecord.hardwareVersion = hardwareVersion.value;
+      }
+
+      const guestOS = findField(row, ['guest os']);
+      if (guestOS) {
+        vmRecord.guestOS = guestOS.value;
+      }
+
+      const cpuCount = findField(row, ['num cpu', 'numcpu', '# cpu', 'number of cpu', 'vcpu', 'cpus']);
+      if (cpuCount) {
+        const num = toNumber(cpuCount.value);
+        if (isFinite(num)) {
+          vmRecord.vcpu = Math.max(num, vmRecord.vcpu || 0);
+        }
+      }
+
+      const cpuUsagePercent = findField(row, ['cpu usage %', 'cpu %', 'cpu usage percent']);
+      if (cpuUsagePercent) {
+        const num = toNumber(cpuUsagePercent.value);
+        if (isFinite(num)) {
+          vmRecord.cpuUsagePercent = Math.max(num, vmRecord.cpuUsagePercent || 0);
+        }
+      }
+
+      const cpuUsageMhz = findField(row, ['cpu usage mhz', 'cpu mhz']);
+      if (cpuUsageMhz) {
+        const num = toNumber(cpuUsageMhz.value);
+        if (isFinite(num)) {
+          vmRecord.cpuUsageMhz = Math.max(num, vmRecord.cpuUsageMhz || 0);
+        }
+      }
+
+      const cpuReady = findField(row, ['cpu ready', 'ready %']);
+      if (cpuReady) {
+        const num = toNumber(cpuReady.value);
+        if (isFinite(num)) {
+          vmRecord.cpuReadyPercent = Math.max(num, vmRecord.cpuReadyPercent || 0);
+        }
+      }
+
+      if (lowerSheet.includes('disk') || lowerSheet.includes('vmdk')) {
+        const diskProvisioned = findField(row, ['provisioned', 'capacity', 'size']);
+        if (diskProvisioned) {
+          const gb = convertToGB(diskProvisioned.value, diskProvisioned.key);
+          if (isFinite(gb)) {
+            vmRecord.storageProvisionedGB = (vmRecord.storageProvisionedGB || 0) + gb;
+          }
+        }
+        const diskUsed = findField(row, ['used', 'in use']);
+        if (diskUsed) {
+          const gb = convertToGB(diskUsed.value, diskUsed.key);
+          if (isFinite(gb)) {
+            vmRecord.storageUsedGB = (vmRecord.storageUsedGB || 0) + gb;
+          }
+        }
+      } else {
+        const storageProvisioned = findField(row, ['provisioned', 'allocated storage', 'storage provisioned']);
+        if (storageProvisioned) {
+          const gb = convertToGB(storageProvisioned.value, storageProvisioned.key);
+          if (isFinite(gb)) {
+            vmRecord.storageProvisionedGB = Math.max(gb, vmRecord.storageProvisionedGB || 0);
+          }
+        }
+        const storageUsed = findField(row, ['in use', 'used storage']);
+        if (storageUsed) {
+          const gb = convertToGB(storageUsed.value, storageUsed.key);
+          if (isFinite(gb)) {
+            vmRecord.storageUsedGB = Math.max(gb, vmRecord.storageUsedGB || 0);
+          }
+        }
+      }
+
+      const memoryProvisioned = findField(row, ['provisioned mib', 'memory size', 'config memory', 'memory mb', 'memory gb']);
+      if (memoryProvisioned) {
+        const gb = convertToGB(memoryProvisioned.value, memoryProvisioned.key);
+        if (isFinite(gb)) {
+          vmRecord.memoryProvisionedGB = Math.max(gb, vmRecord.memoryProvisionedGB || 0);
+        }
+      }
+
+      const memoryUsage = findField(row, ['in use mib', 'memory usage', 'active memory', 'consumed memory']);
+      if (memoryUsage) {
+        const gb = convertToGB(memoryUsage.value, memoryUsage.key);
+        if (isFinite(gb)) {
+          vmRecord.memoryUsageGB = Math.max(gb, vmRecord.memoryUsageGB || 0);
+        }
+      }
+
+      if (lowerSheet.includes('snapshot')) {
+        const snapshotName = findField(row, ['snapshot name', 'name']);
+        const snapshotAge = findField(row, ['age', 'age (days)']);
+        const snapshotCreated = findField(row, ['create time', 'created']);
+        if (!vmRecord.snapshots) vmRecord.snapshots = [];
+        if (snapshotName || snapshotAge || snapshotCreated) {
+          vmRecord.snapshots.push({
+            name: snapshotName ? snapshotName.value : 'Snapshot',
+            age: snapshotAge ? toNumber(snapshotAge.value) : null,
+            created: snapshotCreated ? toDate(snapshotCreated.value) : null,
+          });
+        }
+      } else {
+        const snapshotCount = findField(row, ['number of snapshots', '# snapshots', 'snapshot count']);
+        if (snapshotCount) {
+          const count = toNumber(snapshotCount.value);
+          if (isFinite(count) && count > 0 && !vmRecord.snapshots) {
+            vmRecord.snapshots = Array.from({ length: Math.round(count) }, () => ({
+              name: 'Snapshot',
+              age: null,
+              created: null,
+            }));
+          }
+        }
+      }
+    }
+    function findField(row, patterns) {
+      if (!row || typeof row !== 'object') return null;
+      const keys = Object.keys(row);
+      for (const key of keys) {
+        const normalized = key.toLowerCase();
+        if (patterns.some((pattern) => normalized.includes(pattern))) {
+          const value = row[key];
+          if (value !== null && value !== undefined && value !== '') {
+            return { key, value };
+          }
+        }
+      }
+      return null;
+    }
+
+    function normalizePowerState(state) {
+      if (!state) return 'Unknown';
+      const normalized = state.toString().trim().toLowerCase();
+      if (normalized.includes('on')) return 'Powered on';
+      if (normalized.includes('suspend')) return 'Suspended';
+      if (normalized.includes('off')) return 'Powered off';
+      if (normalized.includes('unknown')) return 'Unknown';
+      return state.toString().trim();
+    }
+
+    function normalizeToolsStatus(status) {
+      if (!status) return 'Unknown';
+      const normalized = status.toString().trim().toLowerCase();
+      if (normalized.includes('not installed')) return 'Not installed';
+      if (normalized.includes('not running')) return 'Not running';
+      if (normalized.includes('current') || normalized.includes('ok') || normalized.includes('running')) return 'Up to date';
+      if (normalized.includes('out of date') || normalized.includes('old') || normalized.includes('upgrade')) return 'Out of date';
+      return status.toString().trim();
+    }
+
+    function toNumber(value) {
+      if (value === null || value === undefined || value === '') return NaN;
+      if (typeof value === 'number') return value;
+      const cleaned = value.toString().replace(/[^0-9.+-]/g, '');
+      const parsed = parseFloat(cleaned);
+      return Number.isFinite(parsed) ? parsed : NaN;
+    }
+
+    function toDate(value) {
+      if (!value) return null;
+      if (value instanceof Date && !isNaN(value)) return value;
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function convertToGB(value, key) {
+      const numeric = toNumber(value);
+      if (!Number.isFinite(numeric)) return NaN;
+      const lowerKey = (key || '').toLowerCase();
+      if (lowerKey.includes('tb')) return numeric * 1024;
+      if (lowerKey.includes('gb')) return numeric;
+      if (lowerKey.includes('mib') || lowerKey.includes('mb')) return numeric / 1024;
+      if (lowerKey.includes('kb') || lowerKey.includes('kib')) return numeric / (1024 * 1024);
+      return numeric / 1024;
+    }
+
+    function deriveSnapshotAge(snapshot) {
+      if (!snapshot) return NaN;
+      if (Number.isFinite(snapshot.age)) return snapshot.age;
+      if (snapshot.created) {
+        const now = new Date();
+        const diff = now - snapshot.created;
+        return diff > 0 ? diff / (1000 * 60 * 60 * 24) : NaN;
+      }
+      return NaN;
+    }
+
+    function extractVersionNumber(label) {
+      if (!label) return null;
+      const match = label.toString().match(/(\d+)/);
+      return match ? parseInt(match[1], 10) : null;
+    }
+    function computeTopVms(vmList) {
+      const byCpuPercent = vmList
+        .filter((vm) => isFinite(vm.cpuUsagePercent))
+        .sort((a, b) => b.cpuUsagePercent - a.cpuUsagePercent)
+        .slice(0, 6);
+
+      const byCpuMhz = vmList
+        .filter((vm) => isFinite(vm.cpuUsageMhz))
+        .sort((a, b) => b.cpuUsageMhz - a.cpuUsageMhz)
+        .slice(0, 6);
+
+      const byMemory = vmList
+        .filter((vm) => isFinite(vm.memoryUsageGB))
+        .sort((a, b) => b.memoryUsageGB - a.memoryUsageGB)
+        .slice(0, 6);
+
+      const merged = new Map();
+      [...byCpuPercent, ...byCpuMhz, ...byMemory].forEach((vm) => {
+        if (!merged.has(vm.name)) {
+          merged.set(vm.name, {
+            name: vm.name,
+            cpuPercent: isFinite(vm.cpuUsagePercent) ? vm.cpuUsagePercent : null,
+            cpuMhz: isFinite(vm.cpuUsageMhz) ? vm.cpuUsageMhz : null,
+            memoryGB: isFinite(vm.memoryUsageGB) ? vm.memoryUsageGB : null,
+          });
+        } else {
+          const existing = merged.get(vm.name);
+          if (!isFinite(existing.cpuPercent) && isFinite(vm.cpuUsagePercent)) existing.cpuPercent = vm.cpuUsagePercent;
+          if (!isFinite(existing.cpuMhz) && isFinite(vm.cpuUsageMhz)) existing.cpuMhz = vm.cpuUsageMhz;
+          if (!isFinite(existing.memoryGB) && isFinite(vm.memoryUsageGB)) existing.memoryGB = vm.memoryUsageGB;
+        }
+      });
+
+      return Array.from(merged.values())
+        .sort((a, b) => (b.cpuPercent || 0) - (a.cpuPercent || 0) || (b.cpuMhz || 0) - (a.cpuMhz || 0))
+        .slice(0, 8);
+    }
+
+    function buildInsights({ base, vmList, healthFindings }) {
+      const insights = {
+        availability: [],
+        manageability: [],
+        performance: [],
+        recoverability: [],
+        security: [],
+        cost: [],
+      };
+
+      const totalPowerStates = Object.values(base.availability.powerStates).reduce((acc, value) => acc + value, 0);
+      const poweredOn = base.availability.powerStates['Powered on'] || 0;
+      const poweredOff = (base.availability.powerStates['Powered off'] || 0) + (base.availability.powerStates['Suspended'] || 0);
+
+      if (totalPowerStates) {
+        const availabilityPercent = poweredOn / totalPowerStates;
+        insights.availability.push(`${poweredOn} of ${totalPowerStates} VMs are powered on (${formatPercent(availabilityPercent)} availability).`);
+      } else {
+        insights.availability.push('Power state information unavailable.');
+      }
+
+      if (poweredOff) {
+        insights.availability.push(`${poweredOff} VMs are currently powered off or suspended. Validate intentional downtime.`);
+      }
+
+      const unknownStates = base.availability.powerStates.Unknown || base.availability.powerStates['Unknown'];
+      if (unknownStates) {
+        insights.availability.push(`${unknownStates} VMs reported an unknown power state in RVTools.`);
+      }
+
+      const toolsTotals = base.manageability.toolsStatus;
+      const compliant = toolsTotals['Up to date'] || 0;
+      const totalTools = Object.values(toolsTotals).reduce((acc, value) => acc + value, 0);
+      const notInstalled = toolsTotals['Not installed'] || 0;
+      const outOfDate = toolsTotals['Out of date'] || 0;
+      const notRunning = toolsTotals['Not running'] || 0;
+
+      if (totalTools) {
+        insights.manageability.push(`${compliant} of ${totalTools} VMs have current VMware Tools.`);
+        if (notInstalled) insights.manageability.push(`${notInstalled} VMs do not have VMware Tools installed.`);
+        if (outOfDate) insights.manageability.push(`${outOfDate} VMs report outdated VMware Tools. Schedule upgrades.`);
+        if (notRunning) insights.manageability.push(`${notRunning} VMs report VMware Tools not running.`);
+      } else {
+        insights.manageability.push('VMware Tools telemetry not found in the provided exports.');
+      }
+
+      const avgCpuPercent = base.performance.cpuPercentSamples ? base.performance.cpuPercentSum / base.performance.cpuPercentSamples : 0;
+      const avgCpuMhz = base.performance.cpuMhzSamples ? base.performance.cpuMhzSum / base.performance.cpuMhzSamples : 0;
+      const avgMemoryUsage = base.performance.memoryUsageSamples ? base.performance.memoryUsageSumGB / base.performance.memoryUsageSamples : 0;
+
+      if (base.performance.cpuPercentSamples) {
+        insights.performance.push(`Average CPU utilisation across sampled VMs is ${avgCpuPercent.toFixed(1)}%.`);
+      }
+      if (base.performance.cpuMhzSamples) {
+        insights.performance.push(`Average CPU consumption is ${avgCpuMhz.toFixed(0)} MHz per VM.`);
+      }
+      if (base.performance.memoryUsageSamples) {
+        insights.performance.push(`Average active memory consumption is ${avgMemoryUsage.toFixed(1)} GB per VM.`);
+      }
+
+      const busyVM = vmList
+        .filter((vm) => isFinite(vm.cpuUsagePercent))
+        .sort((a, b) => b.cpuUsagePercent - a.cpuUsagePercent)[0];
+      if (busyVM && busyVM.cpuUsagePercent > 85) {
+        insights.performance.push(`${busyVM.name} is consuming ${busyVM.cpuUsagePercent.toFixed(1)}% CPU. Check for right-sizing opportunities.`);
+      }
+
+      const vmWithSnapshots = base.recoverability.snapshotDetails.length;
+      if (vmWithSnapshots) {
+        insights.recoverability.push(`${base.recoverability.totalSnapshots} snapshots detected across ${vmWithSnapshots} VMs.`);
+        const aged = base.recoverability.distribution.gte30;
+        if (aged) {
+          insights.recoverability.push(`${aged} snapshots are older than 30 days. Evaluate removal to reduce risk.`);
+        }
+        if (base.recoverability.oldestSnapshot) {
+          insights.recoverability.push(`Oldest snapshot: ${base.recoverability.oldestSnapshot.vm} (${Math.round(base.recoverability.oldestSnapshot.ageDays)} days).`);
+        }
+      } else {
+        insights.recoverability.push('No snapshot metadata found.');
+      }
+
+      if (base.security.flaggedVMs.length) {
+        insights.security.push(`${base.security.flaggedVMs.length} VMs are running legacy virtual hardware (< v13).`);
+      }
+      if (!Object.keys(base.security.hardwareVersions).length) {
+        insights.security.push('Virtual hardware metadata unavailable in the provided exports.');
+      }
+
+      if (base.cost.totalvCPU || base.cost.totalMemoryGB || base.cost.totalStorageGB) {
+        insights.cost.push(`Aggregate estate size: ${base.cost.totalvCPU.toLocaleString()} vCPUs, ${base.cost.totalMemoryGB.toFixed(1)} GB RAM, ${base.cost.totalStorageGB.toFixed(1)} GB storage.`);
+        insights.cost.push(`Estimated monthly infrastructure cost: ${formatCurrency(base.cost.estimatedMonthly)} (CPU ${formatCurrency(base.cost.breakdown.cpu)}, RAM ${formatCurrency(base.cost.breakdown.ram)}, Storage ${formatCurrency(base.cost.breakdown.storage)}).`);
+      } else {
+        insights.cost.push('Capacity data missing. Provide vInfo/vDisk worksheets for costing.');
+      }
+
+      if (healthFindings.length) {
+        insights.availability.push(`${healthFindings.length} health findings imported from vHealth.`);
+      }
+
+      return insights;
+    }
+    function renderDashboard(data) {
+      document.getElementById('fileList').textContent = data.meta.files.join(', ');
+      document.getElementById('summary-files').textContent = data.meta.files.length.toString();
+      document.getElementById('summary-vms').textContent = data.meta.totalVMs.toString();
+
+      const poweredOn = data.availability.powerStates['Powered on'] || 0;
+      const poweredOff = (data.availability.powerStates['Powered off'] || 0) + (data.availability.powerStates['Suspended'] || 0);
+      const avgCpuPercent = data.performance.cpuPercentSamples ? data.performance.cpuPercentSum / data.performance.cpuPercentSamples : 0;
+
+      document.getElementById('summary-powered-on').textContent = poweredOn.toString();
+      document.getElementById('summary-powered-off').textContent = poweredOff.toString();
+      document.getElementById('summary-cpu').textContent = `${avgCpuPercent.toFixed(1)}%`;
+      document.getElementById('summary-cost').textContent = formatCurrency(data.cost.estimatedMonthly);
+
+      renderInsights('availability-insights', data.insights.availability);
+      renderInsights('manageability-insights', data.insights.manageability);
+      renderInsights('performance-insights', data.insights.performance);
+      renderInsights('recoverability-insights', data.insights.recoverability);
+      renderInsights('security-insights', data.insights.security);
+      renderInsights('cost-insights', data.insights.cost);
+
+      renderAvailabilityChart(data.availability.powerStates);
+      renderManageabilityChart(data.manageability.toolsStatus);
+      renderPerformanceChart({
+        avgCpuPercent,
+        avgCpuMhz: data.performance.cpuMhzSamples ? data.performance.cpuMhzSum / data.performance.cpuMhzSamples : 0,
+        avgMemoryUsage: data.performance.memoryUsageSamples ? data.performance.memoryUsageSumGB / data.performance.memoryUsageSamples : 0,
+        totalMemoryProvisioned: data.performance.memoryProvisionedSumGB,
+        totalStorageUsed: data.performance.storageUsedSumGB,
+      });
+      renderRecoverabilityChart(data.recoverability.distribution);
+      renderSecurityChart(data.security.hardwareVersions);
+      renderCostChart(data.cost.breakdown);
+
+      renderPerformanceTable(data.performance.topVMs);
+      renderSnapshotTable(data.recoverability.snapshotDetails);
+      renderHealthTable(data.healthFindings);
+
+      toggleEmptyState('availabilityEmpty', Object.values(data.availability.powerStates).some((value) => value > 0));
+      toggleEmptyState('manageabilityEmpty', Object.keys(data.manageability.toolsStatus).length);
+      toggleEmptyState('performanceEmpty', data.performance.cpuPercentSamples + data.performance.memoryUsageSamples);
+      toggleEmptyState('recoverabilityEmpty', data.recoverability.totalSnapshots);
+      toggleEmptyState('securityEmpty', Object.keys(data.security.hardwareVersions).length);
+      toggleEmptyState('costEmpty', data.cost.totalvCPU + data.cost.totalMemoryGB + data.cost.totalStorageGB);
+    }
+
+    function renderInsights(id, insights) {
+      const list = document.getElementById(id);
+      if (!list) return;
+      list.innerHTML = '';
+      if (!insights || !insights.length) {
+        list.innerHTML = '<li>No insights available.</li>';
+        return;
+      }
+      insights.forEach((item) => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        list.appendChild(li);
+      });
+    }
+
+    function renderPerformanceTable(rows) {
+      const tbody = document.getElementById('performanceTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      if (!rows || !rows.length) {
+        tbody.innerHTML = "<tr><td colspan='4'>No performance outliers detected.</td></tr>";
+        return;
+      }
+      rows.forEach((row) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(row.name)}</td>
+          <td>${formatMaybeNumber(row.cpuPercent, '%')}</td>
+          <td>${formatMaybeNumber(row.cpuMhz, ' MHz')}</td>
+          <td>${formatMaybeNumber(row.memoryGB, ' GB')}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderSnapshotTable(rows) {
+      const tbody = document.getElementById('snapshotTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      if (!rows || !rows.length) {
+        tbody.innerHTML = "<tr><td colspan='4'>No snapshots detected.</td></tr>";
+        return;
+      }
+      rows.slice(0, 8).forEach((row) => {
+        const newest = row.newest instanceof Date ? row.newest.toLocaleDateString() : '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(row.vm)}</td>
+          <td>${row.count}</td>
+          <td>${row.oldest ? Math.round(row.oldest) : 'N/A'}</td>
+          <td>${newest || 'Unknown'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderHealthTable(rows) {
+      const tbody = document.getElementById('healthTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      if (!rows || !rows.length) {
+        tbody.innerHTML = "<tr><td colspan='3'>No vHealth worksheet findings found.</td></tr>";
+        return;
+      }
+      rows.forEach((row) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(row.category || 'General')}</td>
+          <td>${escapeHtml(row.finding || '')}</td>
+          <td>${escapeHtml(row.object || '')}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+    function renderAvailabilityChart(powerStates) {
+      const labels = Object.keys(powerStates);
+      const values = Object.values(powerStates);
+      destroyChart('availabilityChart');
+      if (!labels.length || !values.some((value) => value > 0)) {
+        document.getElementById('availabilityEmpty').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('availabilityEmpty').classList.add('hidden');
+      const ctx = document.getElementById('availabilityChart');
+      charts.availability = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [
+            {
+              data: values,
+              backgroundColor: generatePalette(labels.length),
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: '#cbd5f5' },
+            },
+          },
+        },
+      });
+    }
+
+    function renderManageabilityChart(statuses) {
+      const labels = Object.keys(statuses);
+      const values = Object.values(statuses);
+      destroyChart('manageabilityChart');
+      if (!labels.length || !values.some((value) => value > 0)) {
+        document.getElementById('manageabilityEmpty').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('manageabilityEmpty').classList.add('hidden');
+      const ctx = document.getElementById('manageabilityChart');
+      charts.manageability = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'VM count',
+              data: values,
+              backgroundColor: generatePalette(labels.length, 60, 55),
+            },
+          ],
+        },
+        options: {
+          scales: {
+            x: {
+              ticks: { color: '#cbd5f5' },
+              grid: { color: 'rgba(148, 163, 184, 0.1)' },
+            },
+            y: {
+              ticks: { color: '#cbd5f5' },
+              grid: { color: 'rgba(148, 163, 184, 0.1)' },
+            },
+          },
+          plugins: {
+            legend: { display: false },
+          },
+        },
+      });
+    }
+
+    function renderPerformanceChart(stats) {
+      destroyChart('performanceChart');
+      const labels = ['CPU usage %', 'CPU MHz', 'Active memory GB', 'Provisioned memory GB', 'Storage used GB'];
+      const data = [
+        stats.avgCpuPercent,
+        stats.avgCpuMhz,
+        stats.avgMemoryUsage,
+        stats.totalMemoryProvisioned,
+        stats.totalStorageUsed,
+      ];
+      if (!data.some((value) => isFinite(value) && value > 0)) {
+        document.getElementById('performanceEmpty').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('performanceEmpty').classList.add('hidden');
+      const ctx = document.getElementById('performanceChart');
+      charts.performance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Averages & totals',
+              data,
+              fill: true,
+              backgroundColor: 'rgba(14, 165, 233, 0.25)',
+              borderColor: 'rgba(56, 189, 248, 0.9)',
+              pointBackgroundColor: '#e0f2fe',
+            },
+          ],
+        },
+        options: {
+          scales: {
+            r: {
+              angleLines: { color: 'rgba(148, 163, 184, 0.15)' },
+              grid: { color: 'rgba(148, 163, 184, 0.15)' },
+              pointLabels: { color: '#cbd5f5' },
+              ticks: { display: false },
+            },
+          },
+          plugins: {
+            legend: {
+              labels: { color: '#cbd5f5' },
+            },
+          },
+        },
+      });
+    }
+
+    function renderRecoverabilityChart(distribution) {
+      destroyChart('recoverabilityChart');
+      const labels = ['0-7 days', '7-30 days', '30+ days'];
+      const values = [distribution.lt7, distribution.lt30, distribution.gte30];
+      if (!values.some((value) => value > 0)) {
+        document.getElementById('recoverabilityEmpty').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('recoverabilityEmpty').classList.add('hidden');
+      const ctx = document.getElementById('recoverabilityChart');
+      charts.recoverability = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Snapshots',
+              data: values,
+              backgroundColor: ['#22d3ee', '#38bdf8', '#0ea5e9'],
+            },
+          ],
+        },
+        options: {
+          scales: {
+            x: {
+              ticks: { color: '#cbd5f5' },
+              grid: { color: 'rgba(148, 163, 184, 0.1)' },
+            },
+            y: {
+              ticks: { color: '#cbd5f5' },
+              grid: { color: 'rgba(148, 163, 184, 0.1)' },
+              beginAtZero: true,
+            },
+          },
+          plugins: {
+            legend: { display: false },
+          },
+        },
+      });
+    }
+
+    function renderSecurityChart(hardwareVersions) {
+      destroyChart('securityChart');
+      const labels = Object.keys(hardwareVersions);
+      const values = Object.values(hardwareVersions);
+      if (!labels.length) {
+        document.getElementById('securityEmpty').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('securityEmpty').classList.add('hidden');
+      const ctx = document.getElementById('securityChart');
+      charts.security = new Chart(ctx, {
+        type: 'polarArea',
+        data: {
+          labels,
+          datasets: [
+            {
+              data: values,
+              backgroundColor: generatePalette(labels.length, 55, 60),
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: '#cbd5f5' },
+            },
+          },
+          scales: {
+            r: {
+              grid: { color: 'rgba(148, 163, 184, 0.15)' },
+              angleLines: { color: 'rgba(148, 163, 184, 0.15)' },
+              ticks: { display: false },
+            },
+          },
+        },
+      });
+    }
+
+    function renderCostChart(breakdown) {
+      destroyChart('costChart');
+      const labels = ['CPU', 'RAM', 'Storage'];
+      const values = [breakdown.cpu, breakdown.ram, breakdown.storage];
+      if (!values.some((value) => value > 0)) {
+        document.getElementById('costEmpty').classList.remove('hidden');
+        return;
+      }
+      document.getElementById('costEmpty').classList.add('hidden');
+      const ctx = document.getElementById('costChart');
+      charts.cost = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels,
+          datasets: [
+            {
+              data: values,
+              backgroundColor: ['#38bdf8', '#818cf8', '#f472b6'],
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: '#cbd5f5' },
+            },
+            tooltip: {
+              callbacks: {
+                label(context) {
+                  return `${context.label}: ${formatCurrency(context.parsed)}`;
+                },
+              },
+            },
+          },
+        },
+      });
+    }
+    function destroyChart(id) {
+      const key = id.replace('Chart', '');
+      if (charts[id]) {
+        charts[id].destroy();
+        charts[id] = null;
+      }
+      if (charts[key]) {
+        charts[key].destroy();
+        charts[key] = null;
+      }
+    }
+
+    function generatePalette(length, saturation = 65, lightness = 55) {
+      if (!length) return [];
+      const colors = [];
+      for (let i = 0; i < length; i += 1) {
+        const hue = Math.round((360 / length) * i + 200) % 360;
+        colors.push(`hsl(${hue} ${saturation}% ${lightness}%)`);
+      }
+      return colors;
+    }
+
+    function toggleEmptyState(id, hasValue) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (hasValue) el.classList.add('hidden');
+      else el.classList.remove('hidden');
+    }
+
+    function formatPercent(value) {
+      if (!isFinite(value)) return '0%';
+      return `${(value * 100).toFixed(1)}%`;
+    }
+
+    function formatCurrency(value) {
+      if (!isFinite(value) || value <= 0) return '$0';
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: value < 100 ? 2 : 0,
+      }).format(value);
+    }
+
+    function formatMaybeNumber(value, suffix = '') {
+      if (!isFinite(value)) return 'N/A';
+      const rounded = Math.abs(value) >= 100 ? value.toFixed(0) : value.toFixed(1);
+      return `${rounded}${suffix}`;
+    }
+
+    function escapeHtml(value) {
+      if (value === null || value === undefined) return '';
+      return value
+        .toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+  </script>
+</body>
+</html>
