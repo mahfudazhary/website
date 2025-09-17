@@ -569,6 +569,19 @@
       storageGB: 0.12,
     };
 
+    const RVTOOLS_SHEET_HINTS = [
+      'vinfo',
+      'vhealth',
+      'vsnapshot',
+      'vdisk',
+      'vmemory',
+      'vcpu',
+      'vpartition',
+      'vhardware',
+      'vnetwork',
+      'vhost',
+    ];
+
     const charts = {};
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -604,8 +617,10 @@
       }
     }
 
-    function clearDashboard() {
-      showError('');
+    function clearDashboard(preserveError = false) {
+      if (!preserveError) {
+        showError('');
+      }
       toggleLoading(false);
 
       const summaryDefaults = {
@@ -681,12 +696,45 @@
       showError('');
 
       try {
-        const parsed = await Promise.all(files.map(readWorkbook));
-        const analysis = analyseWorkbooks(parsed);
+        const results = await Promise.allSettled(files.map(readWorkbook));
+        const successful = [];
+        const failures = [];
+
+        results.forEach((result, index) => {
+          const fileName = files[index].name;
+          if (result.status === 'fulfilled') {
+            const { workbook } = result.value;
+            if (isLikelyRvtoolsWorkbook(workbook)) {
+              successful.push(result.value);
+            } else {
+              failures.push(`${fileName}: no RVTools worksheets detected`);
+            }
+          } else {
+            const reason = result.reason && result.reason.message ? result.reason.message : 'Unknown parsing error';
+            failures.push(`${fileName}: ${reason}`);
+          }
+        });
+
+        if (!successful.length) {
+          clearDashboard(true);
+          showError(`Unable to extract RVTools data. ${failures.join(' • ')}`.trim());
+          return;
+        }
+
+        const analysis = analyseWorkbooks(successful);
         renderDashboard(analysis);
+
+        const warnings = [...failures, ...((analysis.meta && analysis.meta.warnings) || [])];
+        if (warnings.length) {
+          const processedLabel = `Processed ${successful.length} file${successful.length === 1 ? '' : 's'} with warnings`;
+          showError(`${processedLabel}: ${warnings.join(' • ')}`);
+        } else {
+          showError('');
+        }
       } catch (error) {
         console.error(error);
-        showError('Unable to parse one or more files. Please confirm you selected a valid RVTools export.');
+        clearDashboard(true);
+        showError('Unexpected error while analysing the selected files.');
       } finally {
         toggleLoading(false);
       }
@@ -695,7 +743,7 @@
     function readWorkbook(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onerror = () => reject(new Error('Unable to read file'));
+        reader.onerror = () => reject(new Error(`Unable to read ${file.name}.`));
         reader.onload = (event) => {
           try {
             const arrayBuffer = event.target.result;
@@ -703,10 +751,19 @@
             const workbook = XLSX.read(data, { type: 'array', cellDates: true });
             resolve({ fileName: file.name, workbook });
           } catch (err) {
-            reject(err);
+            const reason = err && err.message ? err.message : 'Unknown error';
+            reject(new Error(`Failed to parse ${file.name}: ${reason}`));
           }
         };
         reader.readAsArrayBuffer(file);
+      });
+    }
+
+    function isLikelyRvtoolsWorkbook(workbook) {
+      if (!workbook || !Array.isArray(workbook.SheetNames)) return false;
+      return workbook.SheetNames.some((sheetName) => {
+        const name = sheetName ? sheetName.toString().toLowerCase() : '';
+        return RVTOOLS_SHEET_HINTS.some((hint) => name.startsWith(hint));
       });
     }
 
@@ -718,6 +775,7 @@
         meta: {
           files: workbooks.map((wb) => wb.fileName),
           totalVMs: 0,
+          warnings: [],
         },
         availability: {
           powerStates: {},
@@ -766,16 +824,28 @@
       workbooks.forEach(({ fileName, workbook }) => {
         workbook.SheetNames.forEach((sheetName) => {
           const sheet = workbook.Sheets[sheetName];
-          if (!sheet) return;
-          const rows = XLSX.utils.sheet_to_json(sheet, { defval: null, raw: false });
+          if (!sheet || typeof sheet !== 'object' || !sheet['!ref']) return;
+          let rows = [];
+          try {
+            rows = XLSX.utils.sheet_to_json(sheet, { defval: null, raw: false });
+          } catch (sheetError) {
+            const reason = sheetError && sheetError.message ? sheetError.message : 'unexpected format';
+            base.meta.warnings.push(`Skipped worksheet "${sheetName}" in ${fileName}: ${reason}`);
+            return;
+          }
           rows.forEach((row) => {
-            processRow({
-              row,
-              sheetName,
-              source: fileName,
-              vmRecords,
-              healthFindings,
-            });
+            try {
+              processRow({
+                row,
+                sheetName,
+                source: fileName,
+                vmRecords,
+                healthFindings,
+              });
+            } catch (rowError) {
+              const reason = rowError && rowError.message ? rowError.message : 'unexpected format';
+              base.meta.warnings.push(`Skipped a record in "${sheetName}" (${fileName}): ${reason}`);
+            }
           });
         });
       });
