@@ -896,14 +896,28 @@
       const sharedStringsXml = sharedStringsBytes ? TEXT_DECODER.decode(sharedStringsBytes) : null;
       const sharedStrings = sharedStringsXml ? parseSharedStrings(sharedStringsXml) : [];
 
-      const definitions = parseWorkbookDefinition(workbookXml, relationshipsXml);
+      const warnings = [];
+      let definitions = parseWorkbookDefinition(workbookXml, relationshipsXml);
       if (!definitions.length) {
-        throw new Error('No worksheets found within the workbook.');
+        const fallbackTargets = Object.keys(entries).filter((key) =>
+          /^xl\/worksheets\/[^/]+\.xml$/i.test(key)
+        );
+
+        if (fallbackTargets.length) {
+          warnings.push(
+            'Workbook metadata did not reference any worksheets. Falling back to detected worksheet files.'
+          );
+          definitions = fallbackTargets.map((path, index) => ({
+            name: deriveSheetName(path.split('/').pop() || `Sheet ${index + 1}`) || `Sheet ${index + 1}`,
+            path,
+          }));
+        } else {
+          throw new Error('No worksheets found within the workbook.');
+        }
       }
 
       const sheets = {};
       const sheetNames = [];
-      const warnings = [];
 
       definitions.forEach((definition) => {
         const sheetName = definition.name || `Sheet ${sheetNames.length + 1}`;
