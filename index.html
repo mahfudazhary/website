@@ -581,6 +581,63 @@
       'vhost',
     ];
 
+    const RVTOOLS_COLUMN_KEYWORDS = [
+      'vm',
+      'virtual machine',
+      'powerstate',
+      'power state',
+      'vmware tools',
+      'tools status',
+      'guest os',
+      'hardware version',
+      'esx',
+      'host name',
+      'hostname',
+      'cluster',
+      'datacenter',
+      'resource pool',
+      'datastore',
+      'vmdk',
+      'snapshot',
+      'snapshot name',
+      'provisioned',
+      'used mb',
+      'used gb',
+      'cpu usage',
+      'cpu mhz',
+      'num cpu',
+      'memory mb',
+      'memory gb',
+      'memory usage',
+      'category',
+      'finding',
+      'recommendation',
+      'dns name',
+      'ip address',
+      'mac address',
+      'os family',
+      'uptime',
+    ];
+
+    const RVTOOLS_FIELD_GROUPS = [
+      ['vm', 'powerstate'],
+      ['vm', 'esx'],
+      ['vm', 'tools'],
+      ['vm', 'cluster'],
+      ['vm', 'datacenter'],
+      ['vm', 'resource pool'],
+      ['vm', 'datastore'],
+      ['vm', 'snapshot'],
+      ['vm', 'vmdk'],
+      ['vm', 'guest os'],
+      ['vm', 'num cpu'],
+      ['vm', 'memory'],
+    ];
+
+    const RVTOOLS_KEYWORD_THRESHOLD = 6;
+    const RVTOOLS_GROUP_THRESHOLD = 2;
+    const RVTOOLS_DETECTION_SAMPLE = 50;
+
     const charts = {};
 
     const TEXT_DECODER = new TextDecoder('utf-8');
@@ -880,6 +937,28 @@
       const trimmed = fileName.trim();
       const withoutExt = trimmed.replace(/\.[^.]+$/, '');
       return withoutExt || 'Sheet1';
+    }
+
+    function getSheetNames(workbook) {
+      if (!workbook || typeof workbook !== 'object') return [];
+      if (Array.isArray(workbook.sheetNames)) return workbook.sheetNames;
+      if (Array.isArray(workbook.SheetNames)) return workbook.SheetNames;
+      return [];
+    }
+
+    function getSheetRows(workbook, sheetName) {
+      if (!workbook || !sheetName) return [];
+      const source =
+        (workbook.sheets && workbook.sheets[sheetName]) ||
+        (workbook.Sheets && workbook.Sheets[sheetName]) ||
+        [];
+      if (Array.isArray(source)) {
+        return source;
+      }
+      if (source && Array.isArray(source.rows)) {
+        return source.rows;
+      }
+      return [];
     }
 
     async function parseXlsxWorkbook(arrayBuffer) {
@@ -1263,16 +1342,70 @@
 
     function isLikelyRvtoolsWorkbook(workbook) {
       if (!workbook) return false;
-      const sheetNames = Array.isArray(workbook.sheetNames)
-        ? workbook.sheetNames
-        : Array.isArray(workbook.SheetNames)
-        ? workbook.SheetNames
-        : [];
+
+      const sheetNames = getSheetNames(workbook);
       if (!sheetNames.length) return false;
-      return sheetNames.some((sheetName) => {
+
+      const hasNamedWorksheet = sheetNames.some((sheetName) => {
         const name = sheetName ? sheetName.toString().toLowerCase() : '';
-        return RVTOOLS_SHEET_HINTS.some((hint) => name.startsWith(hint));
+        return RVTOOLS_SHEET_HINTS.some((hint) => name.includes(hint));
       });
+
+      if (hasNamedWorksheet) {
+        return true;
+      }
+
+      const keywordMatches = new Set();
+      const matchedGroups = new Set();
+
+      for (let i = 0; i < sheetNames.length; i += 1) {
+        const sheetName = sheetNames[i];
+        const rows = getSheetRows(workbook, sheetName);
+        const limit = Math.min(rows.length, RVTOOLS_DETECTION_SAMPLE);
+
+        for (let j = 0; j < limit; j += 1) {
+          const row = rows[j];
+          if (!row || typeof row !== 'object') {
+            continue;
+          }
+
+          const normalizedKeys = Object.keys(row)
+            .map((key) => (key ? key.toString().trim().toLowerCase() : ''))
+            .filter((key) => key && !/^column\s+\d+$/i.test(key) && !/^field\s+\d+$/i.test(key));
+
+          normalizedKeys.forEach((key) => {
+            RVTOOLS_COLUMN_KEYWORDS.forEach((keyword) => {
+              if (key.includes(keyword)) {
+                keywordMatches.add(keyword);
+              }
+            });
+          });
+
+          RVTOOLS_FIELD_GROUPS.forEach((group, index) => {
+            if (matchedGroups.has(index)) {
+              return;
+            }
+            const matchesGroup = group.every((keyword) =>
+              normalizedKeys.some((key) => key.includes(keyword))
+            );
+            if (matchesGroup) {
+              matchedGroups.add(index);
+            }
+          });
+
+          if (
+            keywordMatches.size >= RVTOOLS_KEYWORD_THRESHOLD ||
+            matchedGroups.size >= RVTOOLS_GROUP_THRESHOLD
+          ) {
+            return true;
+          }
+        }
+      }
+
+      return (
+        keywordMatches.size >= RVTOOLS_KEYWORD_THRESHOLD ||
+        matchedGroups.size >= RVTOOLS_GROUP_THRESHOLD
+      );
     }
 
     function analyseWorkbooks(workbooks) {
@@ -1336,23 +1469,10 @@
           });
         }
 
-        const sheetNames = Array.isArray(workbook.sheetNames)
-          ? workbook.sheetNames
-          : Array.isArray(workbook.SheetNames)
-          ? workbook.SheetNames
-          : [];
+        const sheetNames = getSheetNames(workbook);
 
         sheetNames.forEach((sheetName) => {
-          const rowsSource =
-            (workbook.sheets && workbook.sheets[sheetName]) ||
-            (workbook.Sheets && workbook.Sheets[sheetName]) ||
-            [];
-
-          const rows = Array.isArray(rowsSource)
-            ? rowsSource
-            : rowsSource && Array.isArray(rowsSource.rows)
-            ? rowsSource.rows
-            : [];
+          const rows = getSheetRows(workbook, sheetName);
 
           if (!rows.length) {
             return;
@@ -1498,7 +1618,11 @@
         vmRecords[vmName] = vmRecord;
       }
 
-      if (lowerSheet.includes('health')) {
+      const isHealthSheet =
+        lowerSheet.includes('health') ||
+        (rowHasKey(row, ['category']) && rowHasKey(row, ['finding', 'issue', 'recommendation']));
+
+      if (isHealthSheet) {
         const categoryField = findField(row, ['category']);
         const findingField = findField(row, ['message', 'finding', 'issue']);
         const objectField = vmField || findField(row, ['object', 'target']);
@@ -1567,7 +1691,12 @@
         }
       }
 
-      if (lowerSheet.includes('disk') || lowerSheet.includes('vmdk')) {
+      const isDiskSheet =
+        lowerSheet.includes('disk') ||
+        lowerSheet.includes('vmdk') ||
+        rowHasKey(row, ['vmdk', 'disk file', 'disk path', 'rdm']);
+
+      if (isDiskSheet) {
         const diskProvisioned = findField(row, ['provisioned', 'capacity', 'size']);
         if (diskProvisioned) {
           const gb = convertToGB(diskProvisioned.value, diskProvisioned.key);
@@ -1615,7 +1744,11 @@
         }
       }
 
-      if (lowerSheet.includes('snapshot')) {
+      const isSnapshotSheet =
+        lowerSheet.includes('snapshot') ||
+        rowHasKey(row, ['snapshot name', 'snapshot description', 'create time', 'created']);
+
+      if (isSnapshotSheet) {
         const snapshotName = findField(row, ['snapshot name', 'name']);
         const snapshotAge = findField(row, ['age', 'age (days)']);
         const snapshotCreated = findField(row, ['create time', 'created']);
@@ -1641,6 +1774,16 @@
         }
       }
     }
+    function rowHasKey(row, patterns) {
+      if (!row || typeof row !== 'object') return false;
+      const keys = Object.keys(row);
+      return keys.some((key) => {
+        if (!key) return false;
+        const normalized = key.toLowerCase();
+        return patterns.some((pattern) => normalized.includes(pattern));
+      });
+    }
+
     function findField(row, patterns) {
       if (!row || typeof row !== 'object') return null;
       const keys = Object.keys(row);
