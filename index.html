@@ -1,0 +1,2004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RVTools Operational Assessment</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background-color: #0b1727;
+      color: #e2e8f0;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      background: radial-gradient(circle at top left, #1f2937, #0b1727);
+    }
+    main {
+      width: min(1200px, 95vw);
+      padding: 2.5rem;
+      margin: 2rem 0;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(12px);
+    }
+    h1 {
+      font-size: clamp(2rem, 3vw, 2.8rem);
+      margin-top: 0;
+      text-align: center;
+      letter-spacing: 0.04em;
+    }
+    p.description {
+      text-align: center;
+      color: #cbd5f5;
+      max-width: 60ch;
+      margin: 0 auto 2rem;
+      line-height: 1.5;
+    }
+    .control-panel {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    .control-panel label {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(30, 41, 59, 0.85);
+      padding: 0.85rem 1.5rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .control-panel label:hover {
+      border-color: rgba(148, 163, 184, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.4);
+    }
+    .control-panel input[type="file"] {
+      display: none;
+    }
+    .control-panel button {
+      padding: 0.85rem 1.8rem;
+      border-radius: 999px;
+      border: none;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      background: linear-gradient(120deg, #38bdf8, #6366f1);
+      color: #0f172a;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .control-panel button:disabled {
+      background: rgba(100, 116, 139, 0.6);
+      color: rgba(148, 163, 184, 0.8);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+    .control-panel button:not(:disabled):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(56, 189, 248, 0.35);
+    }
+    #status {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #93c5fd;
+      min-height: 1.2em;
+    }
+    pre#output {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: rgba(15, 23, 42, 0.85);
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      padding: 1.5rem;
+      font-family: "Fira Code", "Cascadia Code", "Courier New", monospace;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.12);
+      color: #bae6fd;
+      font-size: 0.85rem;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      margin-left: 0.75rem;
+    }
+    @media (max-width: 768px) {
+      main {
+        padding: 1.5rem;
+      }
+      .control-panel {
+        flex-direction: column;
+      }
+      .control-panel label, .control-panel button {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>RVTools Operational Assessment</h1>
+    <p class="description">
+      Upload one or more RVTools exports (XLSX/CSV). Each file will be analysed independently and summarised as Markdown tables with actionable recommendations.
+    </p>
+    <div class="control-panel">
+      <label for="file-input">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 16V4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M6 10L12 4L18 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4 16V18C4 19.1046 4.89543 20 6 20H18C19.1046 20 20 19.1046 20 18V16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Select RVTools Exports</span>
+        <span class="badge" id="file-count">0 files</span>
+      </label>
+      <input type="file" id="file-input" accept=".xlsx,.xls,.csv" multiple />
+      <button id="analyze-btn" disabled>Analyze</button>
+    </div>
+    <div id="status"></div>
+    <pre id="output"></pre>
+  </main>
+  <script>
+    const CPU_OVERCOMMIT_WARN = 4.0;
+    const MEM_OVERCOMMIT_WARN = 1.2;
+    const DATASTORE_FREE_WARN = 15.0;
+    const SNAPSHOT_AGE_WARN_DAYS = 7;
+    const SNAPSHOT_SIZE_WARN_GB = 50;
+    const TOOLS_COMPLIANCE_TARGET = 95.0;
+    const CD_CONNECTED_WARN = true;
+    const PROMISCUOUS_ACCEPT_WARN = true;
+    const MAC_CHANGES_ACCEPT_WARN = true;
+    const POWERED_OFF_RIGHTSIZE_DAYS = 30;
+    const HOT_ADD_POLICY = "disable by default unless justified";
+    const NTP_DNS_REQUIRED = true;
+
+    const fileInput = document.getElementById('file-input');
+    const analyzeBtn = document.getElementById('analyze-btn');
+    const outputEl = document.getElementById('output');
+    const statusEl = document.getElementById('status');
+    const fileCountBadge = document.getElementById('file-count');
+
+    let selectedFiles = [];
+
+    fileInput.addEventListener('change', (event) => {
+      selectedFiles = Array.from(event.target.files || []);
+      fileCountBadge.textContent = `${selectedFiles.length} file${selectedFiles.length === 1 ? '' : 's'}`;
+      analyzeBtn.disabled = selectedFiles.length === 0;
+      outputEl.textContent = '';
+      statusEl.textContent = selectedFiles.length ? 'Ready to analyse.' : '';
+    });
+
+    analyzeBtn.addEventListener('click', async () => {
+      if (!selectedFiles.length) return;
+      analyzeBtn.disabled = true;
+      statusEl.textContent = 'Downloading lifecycle data…';
+      outputEl.textContent = '';
+      try {
+        const eosData = await loadLifecycleData();
+        statusEl.textContent = 'Processing files…';
+        const results = [];
+        for (const file of selectedFiles) {
+          const label = file.name;
+          statusEl.textContent = `Processing ${label}…`;
+          try {
+            const sheetMap = await parseFile(file);
+            const analyzer = new RVToolsAnalyzer(eosData);
+            const markdown = analyzer.analyze(label, sheetMap);
+            results.push(markdown);
+          } catch (err) {
+            console.error(err);
+            results.push(`**File: ${label}**\n\nError: ${err.message}`);
+          }
+        }
+        outputEl.textContent = results.join('\n\n---\n\n');
+        statusEl.textContent = 'Completed.';
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = 'Failed to download lifecycle data; continuing with Unknown dates.';
+        const eosData = { vcenter: [], esxi: [] };
+        const results = [];
+        for (const file of selectedFiles) {
+          const label = file.name;
+          statusEl.textContent = `Processing ${label}…`;
+          try {
+            const sheetMap = await parseFile(file);
+            const analyzer = new RVToolsAnalyzer(eosData);
+            const markdown = analyzer.analyze(label, sheetMap);
+            results.push(markdown);
+          } catch (innerErr) {
+            console.error(innerErr);
+            results.push(`**File: ${label}**\n\nError: ${innerErr.message}`);
+          }
+        }
+        outputEl.textContent = results.join('\n\n---\n\n');
+        statusEl.textContent = 'Completed with lifecycle lookup fallback.';
+      } finally {
+        analyzeBtn.disabled = selectedFiles.length === 0;
+      }
+    });
+
+    async function loadLifecycleData() {
+      const endpoints = [
+        { key: 'vcenter', url: 'https://endoflife.date/api/vmware-vcenter-server.json' },
+        { key: 'esxi', url: 'https://endoflife.date/api/vmware-esxi.json' }
+      ];
+      const result = { vcenter: [], esxi: [] };
+      await Promise.all(endpoints.map(async ({ key, url }) => {
+        const response = await fetch(url, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Lifecycle API error: ${response.status}`);
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          result[key] = data;
+        }
+      }));
+      return result;
+    }
+
+    async function parseFile(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      const extension = file.name.split('.').pop().toLowerCase();
+      if (['xlsx', 'xlsm', 'xlsb', 'xls'].includes(extension)) {
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        return workbookToSheetMap(workbook);
+      }
+      if (extension === 'csv') {
+        const text = new TextDecoder().decode(arrayBuffer);
+        const rows = csvToJson(text);
+        const normalizedRows = rows.map(normalizeRowKeys);
+        return {
+          [normalizeKey(file.name) || 'csv']: {
+            name: file.name,
+            rows: normalizedRows,
+            columns: collectColumns(normalizedRows)
+          }
+        };
+      }
+      throw new Error('Unsupported file type: ' + extension);
+    }
+
+    function workbookToSheetMap(workbook) {
+      const sheetMap = {};
+      workbook.SheetNames.forEach((sheetName) => {
+        const sheet = workbook.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: null });
+        const normalizedRows = rows.map(normalizeRowKeys);
+        const key = normalizeKey(sheetName);
+        sheetMap[key] = {
+          name: sheetName,
+          rows: normalizedRows,
+          columns: collectColumns(normalizedRows)
+        };
+      });
+      return sheetMap;
+    }
+
+    function normalizeRowKeys(row) {
+      const normalized = {};
+      Object.entries(row).forEach(([key, value]) => {
+        const norm = normalizeKey(key);
+        if (norm) {
+          normalized[norm] = value;
+        }
+      });
+      return normalized;
+    }
+
+    function collectColumns(rows) {
+      const columns = new Set();
+      rows.forEach((row) => {
+        Object.keys(row).forEach((key) => columns.add(key));
+      });
+      return columns;
+    }
+
+    function csvToJson(text) {
+      const lines = text.split(/\r?\n/).filter((line) => line.trim().length > 0);
+      if (!lines.length) return [];
+      const headers = splitCsvLine(lines[0]);
+      return lines.slice(1).map((line) => {
+        const values = splitCsvLine(line);
+        const row = {};
+        headers.forEach((header, idx) => {
+          row[header] = values[idx] ?? '';
+        });
+        return row;
+      });
+    }
+
+    function splitCsvLine(line) {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            current += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          result.push(current);
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      result.push(current);
+      return result.map((value) => value.trim());
+    }
+
+    function normalizeKey(key) {
+      return String(key || '')
+        .toLowerCase()
+        .replace(/[`'"\]\[{}]/g, '')
+        .replace(/\s+/g, '')
+        .replace(/[_:/\\-]+/g, '')
+        .replace(/\(.*?\)/g, '')
+        .replace(/\./g, '')
+        .trim();
+    }
+
+    function escapeMarkdown(value) {
+      if (value === null || value === undefined) return '—';
+      return String(value).replace(/\|/g, '\\|');
+    }
+
+    function formatNumber(value, decimals = 1) {
+      if (value === null || value === undefined || Number.isNaN(value)) return '—';
+      return Number(value).toFixed(decimals);
+    }
+
+    function formatInteger(value) {
+      if (value === null || value === undefined || Number.isNaN(value)) return '—';
+      return Math.round(Number(value)).toLocaleString();
+    }
+
+    function formatPercent(value, decimals = 1) {
+      if (value === null || value === undefined || Number.isNaN(value)) return '—';
+      return Number(value).toFixed(decimals) + '%';
+    }
+
+    function formatDateISO(date) {
+      if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '—';
+      return date.toISOString().split('T')[0];
+    }
+
+    function toNumber(value) {
+      if (value === null || value === undefined) return null;
+      if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+      if (typeof value === 'boolean') return value ? 1 : 0;
+      const cleaned = String(value).replace(/[^0-9+\-\.]/g, '');
+      if (!cleaned) return null;
+      const num = Number(cleaned);
+      return Number.isFinite(num) ? num : null;
+    }
+
+    function toBoolean(value) {
+      if (value === null || value === undefined) return false;
+      if (typeof value === 'boolean') return value;
+      const normalized = String(value).trim().toLowerCase();
+      return ['true', 'yes', 'on', '1', 'connected', 'enabled'].includes(normalized);
+    }
+
+    function parseDate(value) {
+      if (!value) return null;
+      if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        const excelDate = new Date(Math.round((value - 25569) * 86400 * 1000));
+        if (!Number.isNaN(excelDate.getTime())) return excelDate;
+      }
+      const parsed = new Date(value);
+      if (!Number.isNaN(parsed.getTime())) return parsed;
+      return null;
+    }
+
+    function diffInDays(dateA, dateB) {
+      if (!(dateA instanceof Date) || !(dateB instanceof Date)) return null;
+      const diff = dateB.getTime() - dateA.getTime();
+      return diff / (1000 * 60 * 60 * 24);
+    }
+
+    function sumBy(rows, iteratee) {
+      return rows.reduce((total, row) => total + (Number(iteratee(row)) || 0), 0);
+    }
+
+    function groupBy(rows, iteratee) {
+      const map = new Map();
+      rows.forEach((row) => {
+        const key = iteratee(row);
+        if (!map.has(key)) {
+          map.set(key, []);
+        }
+        map.get(key).push(row);
+      });
+      return map;
+    }
+
+    function getSheet(sheetMap, sheetNames, caveats, label) {
+      for (const name of sheetNames) {
+        const norm = normalizeKey(name);
+        if (sheetMap[norm]) {
+          return sheetMap[norm];
+        }
+      }
+      if (caveats && label) {
+        caveats.add(`Missing sheet: ${label}`);
+      }
+      return { name: label || sheetNames[0], rows: [], columns: new Set() };
+    }
+
+    function sheetHasColumn(sheet, names) {
+      if (!sheet || !sheet.columns) return false;
+      return names.some((name) => sheet.columns.has(normalizeKey(name)));
+    }
+
+    function getValue(row, names) {
+      for (const name of names) {
+        const norm = normalizeKey(name);
+        if (Object.prototype.hasOwnProperty.call(row, norm)) {
+          return row[norm];
+        }
+      }
+      return null;
+    }
+
+    function markdownTable(headers, rows) {
+      const headerRow = `| ${headers.map(escapeMarkdown).join(' | ')} |`;
+      const separator = `| ${headers.map(() => '---').join(' | ')} |`;
+      const body = rows.length
+        ? rows.map((row) => `| ${row.map((cell) => escapeMarkdown(cell)).join(' | ')} |`).join('\n')
+        : `| ${headers.map(() => '—').join(' | ')} |`;
+      return `${headerRow}\n${separator}\n${body}`;
+    }
+
+    class RVToolsAnalyzer {
+      constructor(eosData) {
+        this.eosData = eosData || { vcenter: [], esxi: [] };
+        this.now = new Date();
+        this.caveats = new Set();
+      }
+
+      analyze(fileLabel, sheetMap) {
+        const sections = [];
+        const context = this.prepareContext(sheetMap);
+        sections.push(this.buildEnvironmentSummary(context));
+        sections.push(this.buildOvercommitTable(context));
+        sections.push(this.buildVersionTable(context));
+        sections.push(this.buildDatastoreTable(context));
+        sections.push(this.buildSnapshotTable(context));
+        sections.push(this.buildConsolidationTable(context));
+        sections.push(this.buildLargeVmTable(context));
+        sections.push(...this.buildPowerStateTables(context));
+        sections.push(this.buildPoweredOnAgeTable(context));
+        sections.push(this.buildClusterHaDrsTable(context));
+        sections.push(this.buildCdTable(context));
+        sections.push(this.buildToolsTable(context));
+        sections.push(this.buildPortGroupSecurityTable(context));
+        sections.push(this.buildHwVersionTable(context));
+        sections.push(this.buildTemplatesTable(context));
+        sections.push(this.buildLatencyTable(context));
+        sections.push(this.buildSrmTable(context));
+        sections.push(this.buildDnsTable(context));
+        sections.push(this.buildConnectionStateTable(context));
+        sections.push(this.buildOsAlignmentTable(context));
+        sections.push(this.buildNicStateTable(context));
+        sections.push(this.buildNicCountTable(context));
+        sections.push(this.buildBackupTable(context));
+        sections.push(this.buildEvcTable(context));
+        sections.push(this.buildVmotionTable(context));
+        sections.push(this.buildAdmissionControlTable(context));
+        sections.push(this.buildReservationTable(context));
+        sections.push(this.buildHotAddTable(context));
+        sections.push(this.buildLargestDiskTable(context));
+        sections.push(this.buildVendorModelTable(context));
+        sections.push(this.buildCpuModelTable(context));
+        sections.push(this.buildUplinkPolicyTable(context));
+        sections.push(this.buildVlanTable(context));
+        sections.push(this.buildVmsPerDatastoreTable(context));
+        sections.push(this.buildHostsByVmTable(context));
+        sections.push(this.buildMultipathTable(context));
+        sections.push(this.buildHostDnsNtpTable(context));
+        sections.push(this.buildAssessmentSummary(context));
+
+        const joined = sections.filter(Boolean).join('\n\n');
+        const caveatsText = this.caveats.size
+          ? `\n\n**Data Caveats:**\n${Array.from(this.caveats).map((item) => `- ${item}`).join('\n')}`
+          : '';
+        return `**File:** ${escapeMarkdown(fileLabel)}\n\n${joined}${caveatsText}`;
+      }
+
+      prepareContext(sheetMap) {
+        const vcenter = getSheet(sheetMap, ['vCenter'], this.caveats, 'vCenter');
+        const vdatacenter = getSheet(sheetMap, ['vDatacenter'], this.caveats, 'vDatacenter');
+        const vcluster = getSheet(sheetMap, ['vCluster'], this.caveats, 'vCluster');
+        const vhost = getSheet(sheetMap, ['vHost'], this.caveats, 'vHost');
+        const vinfo = getSheet(sheetMap, ['vInfo'], this.caveats, 'vInfo');
+        const vdisk = getSheet(sheetMap, ['vDisk'], this.caveats, 'vDisk');
+        const vsnapshot = getSheet(sheetMap, ['vSnapshot'], this.caveats, 'vSnapshot');
+        const vtools = getSheet(sheetMap, ['vTools'], this.caveats, 'vTools');
+        const vcd = getSheet(sheetMap, ['vCD'], this.caveats, 'vCD');
+        const vnic = getSheet(sheetMap, ['vNic'], this.caveats, 'vNic');
+        const vportgroup = getSheet(sheetMap, ['vPortGroup', 'vNetwork', 'vPort'], this.caveats, 'vPortGroup');
+        const vswitch = getSheet(sheetMap, ['vSwitch'], this.caveats, 'vSwitch');
+        const vpath = getSheet(sheetMap, ['vPath'], this.caveats, 'vPath');
+        const vdatastore = getSheet(sheetMap, ['vDatastore'], this.caveats, 'vDatastore');
+
+        return {
+          vcenter,
+          vdatacenter,
+          vcluster,
+          vhost,
+          vinfo,
+          vdisk,
+          vsnapshot,
+          vtools,
+          vcd,
+          vnic,
+          vportgroup,
+          vswitch,
+          vpath,
+          vdatastore
+        };
+      }
+
+      buildEnvironmentSummary(ctx) {
+        const { vcenter, vdatacenter, vcluster, vhost, vinfo, vdisk } = ctx;
+        const vCenterCount = this.countDistinct(vcenter.rows, ['vcenter']);
+        const dcCount = this.countDistinct(vdatacenter.rows, ['datacenter']);
+        const clusterCount = this.countDistinct(vcluster.rows, ['cluster']);
+        const hostCount = vhost.rows.length;
+        const vmCount = vinfo.rows.length;
+        const stdSwitchCount = this.countByCondition(ctx.vswitch.rows, ['switchtype', 'type'], (value) => {
+          const text = String(value || '').toLowerCase();
+          return text.includes('standard') || text.includes('vss') || text === 'std';
+        });
+        const dsSwitchCount = this.countByCondition(ctx.vswitch.rows, ['switchtype', 'type'], (value) => {
+          const text = String(value || '').toLowerCase();
+          return text.includes('distributed') || text.includes('vds') || text === 'ds';
+        });
+        const datastores = this.countDistinct(vdisk.rows, ['datastore']);
+        let resourcePoolCount = '—';
+        if (sheetHasColumn(vinfo, ['resourcepool', 'resourcepoolname'])) {
+          const pools = new Set();
+          vinfo.rows.forEach((row) => {
+            const raw = getValue(row, ['resourcepool', 'resourcepoolname']);
+            if (!raw) return;
+            const value = String(raw).trim();
+            if (!value) return;
+            if (['resources', 'resourcepool'].includes(value.toLowerCase())) return;
+            pools.add(value);
+          });
+          resourcePoolCount = pools.size ? pools.size : '0';
+        } else {
+          this.caveats.add('Missing column: Resource Pool (vInfo)');
+        }
+        const summaryTable = markdownTable(
+          ['vCenter', 'Data Center', 'Cluster', 'Host', 'Resource Pool', 'Virtual Machine', 'Standard Switch', 'Distributed Switch', '#Datastores'],
+          [[
+            formatInteger(vCenterCount),
+            formatInteger(dcCount),
+            formatInteger(clusterCount),
+            formatInteger(hostCount),
+            typeof resourcePoolCount === 'string' ? resourcePoolCount : formatInteger(resourcePoolCount),
+            formatInteger(vmCount),
+            formatInteger(stdSwitchCount),
+            formatInteger(dsSwitchCount),
+            formatInteger(datastores)
+          ]]
+        );
+        const vmsPerHost = hostCount ? vmCount / hostCount : null;
+        const recommendations = [
+          `* Track VM-to-host density (~${vmsPerHost ? formatNumber(vmsPerHost, 1) : '—'} VMs/host) to align capacity planning → avoids contention surprises → sustains performance SLAs.`,
+          '* Keep RVTools exports for each vCenter to maintain accurate inventory → supports audit readiness → improves operational visibility.'
+        ];
+        return `**Table 1: Environment Summary**\n${summaryTable}\nRecommendation 1:\n${recommendations.join('\n')}`;
+      }
+
+      buildOvercommitTable(ctx) {
+        const stats = this.computeOvercommit(ctx);
+        const rows = stats.map((stat) => {
+          const cpuCell = stat.cpuRatio !== null
+            ? `${formatNumber(stat.cpuRatio, 2)}${stat.cpuRatio > CPU_OVERCOMMIT_WARN ? ' ⚠️' : ''}`
+            : '—';
+          const memCell = stat.memRatio !== null
+            ? `${formatNumber(stat.memRatio, 2)}${stat.memRatio > MEM_OVERCOMMIT_WARN ? ' ⚠️' : ''}`
+            : '—';
+          return [stat.cluster, cpuCell, memCell];
+        });
+        rows.sort((a, b) => a[0].localeCompare(b[0]));
+        const overcommitTable = markdownTable(['Cluster', 'CPU Overcommit (vCPU:core)', 'Memory Overcommit (vRAM:phys)'], rows);
+        const highCpu = rows.filter((row) => row[1].includes('⚠️')).length;
+        const highMem = rows.filter((row) => row[2].includes('⚠️')).length;
+        const recommendations = [];
+        if (highCpu || highMem) {
+          recommendations.push('* Right-size or expand clusters with high overcommit (⚠️) → reduces contention and noisy-neighbour risk → protects performance SLAs.');
+        } else {
+          recommendations.push('* Maintain current CPU/RAM headroom via regular capacity reviews → prevents unplanned saturation → keeps workloads stable.');
+        }
+        recommendations.push('* Incorporate reservation governance for critical workloads → ensures guaranteed resources → supports priority application uptime.');
+        return `**Table 2: Overcommit Ratios (per Cluster)**\n${overcommitTable}\nRecommendation 2:\n${recommendations.join('\n')}`;
+      }
+
+      buildVersionTable(ctx) {
+        const { vcenter, vhost } = ctx;
+        const vcenterVersions = this.aggregateVersions(vcenter.rows, ['version']);
+        const esxiVersions = this.aggregateVersions(vhost.rows, ['version', 'productversion']);
+        const rows = [];
+        vcenterVersions.forEach((count, version) => {
+          const eos = this.lookupEos('vcenter', version);
+          rows.push([`vCenter ${version}`, eos.date, eos.withinSix ? 'T' : 'F']);
+        });
+        esxiVersions.forEach((count, version) => {
+          const eos = this.lookupEos('esxi', version);
+          rows.push([`ESXi ${version}`, eos.date, eos.withinSix ? 'T' : 'F']);
+        });
+        if (!rows.length) {
+          rows.push(['—', 'Unknown', 'F']);
+        }
+        const table = markdownTable(['Version', 'EoS Date', '<6 Months (T/F)'], rows);
+        const nearEos = rows.filter((row) => row[2] === 'T').length;
+        const recommendations = [];
+        if (nearEos) {
+          recommendations.push('* Plan upgrades for versions within 6 months of EoS → restores access to patches → reduces compliance and security risk.');
+        } else {
+          recommendations.push('* Keep lifecycle roadmaps aligned with VMware support matrix → avoids surprise EoS gaps → maintains vendor support eligibility.');
+        }
+        recommendations.push('* Validate interoperability across vCenter/ESXi builds before upgrades → ensures smooth change execution → limits outage risk.');
+        return `**Table 3: Version Distribution & EoS**\n${table}\nRecommendation 3:\n${recommendations.join('\n')}`;
+      }
+
+      aggregateVersions(rows, versionKeys) {
+        const map = new Map();
+        rows.forEach((row) => {
+          const versionRaw = getValue(row, versionKeys);
+          if (!versionRaw) return;
+          const version = String(versionRaw).trim();
+          if (!version) return;
+          map.set(version, (map.get(version) || 0) + 1);
+        });
+        return map;
+      }
+
+      lookupEos(type, version) {
+        const dataset = (this.eosData && this.eosData[type]) || [];
+        if (!dataset.length || !version) {
+          return { date: 'Unknown', withinSix: false };
+        }
+        const cleaned = String(version).trim();
+        let entry = dataset.find((item) => item.cycle && cleaned.startsWith(item.cycle));
+        if (!entry) {
+          entry = dataset.find((item) => item.cycle && item.cycle.startsWith(cleaned));
+        }
+        if (!entry) {
+          return { date: 'Unknown', withinSix: false };
+        }
+        const date = entry.eol ? entry.eol : 'Unknown';
+        if (date === 'Unknown') {
+          return { date, withinSix: false };
+        }
+        const eosDate = parseDate(date);
+        const withinSix = eosDate ? diffInDays(this.now, eosDate) <= 183 : false;
+        return { date, withinSix };
+      }
+
+      buildDatastoreTable(ctx) {
+        const { vdatastore } = ctx;
+        const rows = [];
+        vdatastore.rows.forEach((row) => {
+          const name = getValue(row, ['datastore', 'name']);
+          const capacityMb = toNumber(getValue(row, ['capacitymb', 'capacity']));
+          const freeMb = toNumber(getValue(row, ['freemb', 'free']));
+          const capacityGb = capacityMb !== null ? capacityMb / 1024 : null;
+          const freeGb = freeMb !== null ? freeMb / 1024 : null;
+          const freePct = capacityGb ? (freeGb / capacityGb) * 100 : null;
+          const freeCell = freePct !== null
+            ? `${formatNumber(freeGb, 1)} (${formatPercent(freePct, 1)})${freePct < DATASTORE_FREE_WARN ? ' ⚠️' : ''}`
+            : '—';
+          rows.push([
+            name || '—',
+            formatNumber(capacityGb, 1),
+            formatNumber(freeGb, 1),
+            `${formatPercent(freePct, 1)}${freePct !== null && freePct < DATASTORE_FREE_WARN ? ' ⚠️' : ''}`
+          ]);
+        });
+        if (!rows.length) {
+          rows.push(['—', '—', '—', '—']);
+          this.caveats.add('Missing datastore capacity metrics.');
+        }
+        const table = markdownTable(['Datastore', 'Capacity (GB)', 'Free (GB)', 'Free (%)'], rows);
+        const lowFree = rows.filter((row) => row[3].includes('⚠️')).length;
+        const recommendations = [];
+        if (lowFree) {
+          recommendations.push('* Reclaim old snapshots/powered-off VMs on low-free datastores (⚠️) → prevents datastore full events → avoids VM outages.');
+        } else {
+          recommendations.push('* Continue monitoring datastore utilization with 15% alerting → maintains buffer for growth → reduces emergency expansion.');
+        }
+        recommendations.push('* Validate storage tier alignment for critical workloads → ensures performance consistency → supports application SLAs.');
+        return `**Table 4: Datastore Capacity**\n${table}\nRecommendation 4:\n${recommendations.join('\n')}`;
+      }
+
+      buildSnapshotTable(ctx) {
+        const { vsnapshot } = ctx;
+        const grouped = new Map();
+        vsnapshot.rows.forEach((row) => {
+          const vm = String(getValue(row, ['vm']) || '—');
+          const cluster = String(getValue(row, ['cluster']) || '—');
+          const sizeGb = toNumber(getValue(row, ['snapshotsizegb', 'sizegb', 'snapshotsize']));
+          const createTime = parseDate(getValue(row, ['createtime', 'created']));
+          if (!grouped.has(vm)) {
+            grouped.set(vm, {
+              vm,
+              cluster,
+              totalSize: 0,
+              oldest: null
+            });
+          }
+          const info = grouped.get(vm);
+          if (sizeGb !== null) info.totalSize += sizeGb;
+          if (createTime) {
+            if (!info.oldest || createTime < info.oldest) {
+              info.oldest = createTime;
+            }
+          }
+        });
+        const entries = Array.from(grouped.values()).map((item) => {
+          const ageDays = item.oldest ? diffInDays(item.oldest, this.now) : null;
+          return {
+            vm: item.vm,
+            cluster: item.cluster,
+            ageDays,
+            size: item.totalSize
+          };
+        });
+        entries.sort((a, b) => {
+          const ageDiff = (b.ageDays || 0) - (a.ageDays || 0);
+          if (ageDiff !== 0) return ageDiff;
+          const sizeDiff = (b.size || 0) - (a.size || 0);
+          if (sizeDiff !== 0) return sizeDiff;
+          return a.vm.localeCompare(b.vm);
+        });
+        const top = entries.slice(0, 10);
+        const rows = top.map((item) => {
+          const ageCell = item.ageDays !== null
+            ? `${formatNumber(item.ageDays, 1)}${item.ageDays > SNAPSHOT_AGE_WARN_DAYS ? ' ⚠️' : ''}`
+            : '—';
+          const sizeCell = item.size !== null
+            ? `${formatNumber(item.size, 1)}${item.size > SNAPSHOT_SIZE_WARN_GB ? ' ⚠️' : ''}`
+            : '—';
+          return [item.vm, item.cluster, ageCell, sizeCell];
+        });
+        if (!rows.length) {
+          rows.push(['—', '—', '—', '—']);
+        }
+        const table = markdownTable(['VM', 'Cluster', 'Snapshot Age (days)', 'Snapshot Size (GB)'], rows);
+        const warnings = rows.filter((row) => row[2].includes('⚠️') || row[3].includes('⚠️')).length;
+        const recommendations = [];
+        if (warnings) {
+          recommendations.push('* Delete or consolidate aged/large snapshots (⚠️) after validation → reduces storage bloat → improves backup reliability.');
+        } else {
+          recommendations.push('* Maintain weekly snapshot hygiene checks → prevents stealth storage consumption → sustains performance.');
+        }
+        recommendations.push('* Automate snapshot expiry notifications with tooling → shortens cleanup cycles → controls storage costs.');
+        return `**Table 5: VM Snapshots (Top-10)**\n${table}\nRecommendation 5:\n${recommendations.join('\n')}`;
+      }
+
+      buildConsolidationTable(ctx) {
+        const { vinfo } = ctx;
+        const rows = [];
+        vinfo.rows.forEach((row) => {
+          const needs = String(getValue(row, ['consolidationneeded', 'needsconsolidation']) || '').toLowerCase();
+          if (['true', 'yes', '1'].includes(needs)) {
+            rows.push([
+              getValue(row, ['vm']) || '—',
+              getValue(row, ['cluster']) || '—',
+              'True'
+            ]);
+          }
+        });
+        rows.sort((a, b) => a[0].localeCompare(b[0]));
+        const top = rows.slice(0, 10);
+        const table = markdownTable(['VM', 'Cluster', 'Consolidation Needed (T/F)'], top.length ? top : [['—', '—', '—']]);
+        const recommendations = [];
+        if (rows.length) {
+          recommendations.push('* Run snapshot consolidation on flagged VMs → avoids disk chain corruption → protects data integrity.');
+        } else {
+          recommendations.push('* Keep backup tooling monitored for consolidation errors → prevents latent datastore issues → sustains recoverability.');
+        }
+        recommendations.push('* Document a runbook for consolidation failures → accelerates incident response → reduces MTTR.');
+        return `**Table 6: VM Consolidation Needed (Top-10)**\n${table}\nRecommendation 6:\n${recommendations.join('\n')}`;
+      }
+
+      buildLargeVmTable(ctx) {
+        const { vinfo, vdisk } = ctx;
+        const diskTotals = new Map();
+        vdisk.rows.forEach((row) => {
+          const vm = String(getValue(row, ['vm']) || '—');
+          const cap = toNumber(getValue(row, ['capacitygb', 'capacity']));
+          if (!diskTotals.has(vm)) diskTotals.set(vm, 0);
+          if (cap !== null) diskTotals.set(vm, diskTotals.get(vm) + cap);
+        });
+        const entries = vinfo.rows.map((row) => {
+          const vm = getValue(row, ['vm']) || '—';
+          const cluster = getValue(row, ['cluster']) || '—';
+          const vcpu = toNumber(getValue(row, ['vcpu', 'numcpu'])) || 0;
+          const memGb = toNumber(getValue(row, ['memorymb', 'memory']));
+          const vram = memGb !== null ? memGb / 1024 : 0;
+          const disk = diskTotals.get(vm) || 0;
+          return { vm, cluster, vcpu, vram, disk };
+        });
+        entries.sort((a, b) => {
+          if (b.vcpu !== a.vcpu) return b.vcpu - a.vcpu;
+          if (b.vram !== a.vram) return b.vram - a.vram;
+          if (b.disk !== a.disk) return b.disk - a.disk;
+          return a.vm.localeCompare(b.vm);
+        });
+        const top = entries.slice(0, 10).map((item) => [
+          item.vm,
+          item.cluster,
+          formatInteger(item.vcpu),
+          formatNumber(item.vram, 1),
+          formatNumber(item.disk, 1)
+        ]);
+        const table = markdownTable(['VM', 'Cluster', 'vCPU', 'vRAM (GB)', 'vDisk Total (GB)'], top.length ? top : [['—', '—', '—', '—', '—']]);
+        const recommendations = [];
+        if (entries.length) {
+          recommendations.push('* Review sizing of top VMs for NUMA alignment/licensing impact → optimizes resource usage → reduces software costs.');
+        }
+        recommendations.push('* Use performance baselines before downsizing large VMs → safeguards workload SLAs → avoids performance regressions.');
+        return `**Table 7: Large VMs (Top-10)**\n${table}\nRecommendation 7:\n${recommendations.join('\n')}`;
+      }
+
+      buildPowerStateTables(ctx) {
+        const { vinfo, vdisk } = ctx;
+        const powerCounts = new Map();
+        vinfo.rows.forEach((row) => {
+          const state = (getValue(row, ['powerstate']) || 'Unknown').toString().toLowerCase();
+          powerCounts.set(state, (powerCounts.get(state) || 0) + 1);
+        });
+        const poweredOn = (powerCounts.get('poweredon') || powerCounts.get('on') || 0);
+        const poweredOff = (powerCounts.get('poweredoff') || powerCounts.get('off') || 0);
+        const table8 = markdownTable(['Power Status', '#Powered On', '#Powered Off'], [
+          ['VMs', formatInteger(poweredOn), formatInteger(poweredOff)]
+        ]);
+
+        const diskTotals = new Map();
+        vdisk.rows.forEach((row) => {
+          const vm = String(getValue(row, ['vm']) || '—');
+          const cap = toNumber(getValue(row, ['capacitygb', 'capacity']));
+          if (!diskTotals.has(vm)) diskTotals.set(vm, 0);
+          if (cap !== null) diskTotals.set(vm, diskTotals.get(vm) + cap);
+        });
+        const poweredOffList = vinfo.rows
+          .filter((row) => ['poweredoff', 'off'].includes(String(getValue(row, ['powerstate']) || '').toLowerCase()))
+          .map((row) => {
+            const vm = getValue(row, ['vm']) || '—';
+            const cluster = getValue(row, ['cluster']) || '—';
+            const vcpu = toNumber(getValue(row, ['vcpu', 'numcpu'])) || 0;
+            const memMb = toNumber(getValue(row, ['memorymb', 'memory']));
+            const vram = memMb !== null ? memMb / 1024 : 0;
+            const disk = diskTotals.get(vm) || 0;
+            return { vm, cluster, vcpu, vram, disk };
+          });
+        poweredOffList.sort((a, b) => {
+          if (b.vcpu !== a.vcpu) return b.vcpu - a.vcpu;
+          if (b.vram !== a.vram) return b.vram - a.vram;
+          if (b.disk !== a.disk) return b.disk - a.disk;
+          return a.vm.localeCompare(b.vm);
+        });
+        const topOff = poweredOffList.slice(0, 10).map((item) => [
+          item.vm,
+          item.cluster,
+          formatInteger(item.vcpu),
+          formatNumber(item.vram, 1),
+          formatNumber(item.disk, 1)
+        ]);
+        const table9 = markdownTable(['VM', 'Cluster', 'vCPU', 'vRAM (GB)', 'vDisk (GB)'], topOff.length ? topOff : [['—', '—', '—', '—', '—']]);
+
+        const recommendations8 = [
+          '* Monitor power state distribution to baseline demand → sharpens capacity forecasts → balances resource supply.',
+          poweredOffList.length
+            ? '* Decommission powered-off VMs older than 30 days to reclaim compute and storage → immediate cost savings → tidier inventory.'
+            : '* Maintain idle VM watchlist even if none currently powered off → keeps hygiene discipline → avoids cost creep.'
+        ];
+        const recommendations9 = poweredOffList.length
+          ? ['* Tag powered-off VMs with owner/expiration → speeds up retirement decisions → improves accountability.']
+          : ['* Ensure VM lifecycle governance includes attestation of unused assets → prevents zombie workload costs → improves audit posture.'];
+
+        return [
+          `**Table 8: Power State**\n${table8}\nRecommendation 8:\n${recommendations8.join('\n')}`,
+          `**Table 9: Powered-Off VMs (Top-10)**\n${table9}\nRecommendation 9:\n${recommendations9.join('\n')}`
+        ];
+      }
+
+      buildPoweredOnAgeTable(ctx) {
+        const { vinfo } = ctx;
+        const now = this.now;
+        const list = vinfo.rows.map((row) => {
+          const vm = getValue(row, ['vm']) || '—';
+          const cluster = getValue(row, ['cluster']) || '—';
+          const powerState = String(getValue(row, ['powerstate']) || '').toLowerCase();
+          if (!['poweredon', 'on'].includes(powerState)) return null;
+          const powerOnRaw = getValue(row, ['poweron', 'powerontime', 'powerontimestamp']);
+          const uptimeRaw = toNumber(getValue(row, ['uptimedays', 'uptime']));
+          let ageDays = null;
+          const powerOnDate = parseDate(powerOnRaw);
+          if (powerOnDate) {
+            ageDays = diffInDays(powerOnDate, now);
+          } else if (uptimeRaw !== null) {
+            ageDays = uptimeRaw;
+          }
+          if (ageDays === null) return null;
+          return { vm, cluster, ageDays };
+        }).filter(Boolean);
+        list.sort((a, b) => {
+          if (b.ageDays !== a.ageDays) return b.ageDays - a.ageDays;
+          return a.vm.localeCompare(b.vm);
+        });
+        const top = list.slice(0, 10).map((item) => [
+          item.vm,
+          item.cluster,
+          formatNumber(item.ageDays, 1)
+        ]);
+        const table = markdownTable(['VM', 'Cluster', 'Powered-On Age (days)'], top.length ? top : [['—', '—', '—']]);
+        const recommendations = [];
+        if (list.length) {
+          recommendations.push('* Schedule maintenance reboots for longest-running VMs → clears resource leaks → stabilises performance and patch posture.');
+        } else {
+          recommendations.push('* Capture uptime metrics in monitoring stack → enables proactive reboot planning → reduces unplanned incidents.');
+        }
+        recommendations.push('* Coordinate restarts with application owners → protects change success → minimises business disruption.');
+        return `**Table 10: Powered-On Age (Top-10)**\n${table}\nRecommendation 10:\n${recommendations.join('\n')}`;
+      }
+
+      buildClusterHaDrsTable(ctx) {
+        const { vcluster } = ctx;
+        const rows = vcluster.rows.map((row) => [
+          getValue(row, ['cluster']) || '—',
+          toBoolean(getValue(row, ['haenabled', 'ha'])) ? 'On' : 'Off',
+          toBoolean(getValue(row, ['drsenabled', 'drs'])) ? 'On' : 'Off'
+        ]);
+        const table = markdownTable(['Cluster', 'HA (on/off)', 'DRS (on/off)'], rows.length ? rows : [['—', '—', '—']]);
+        const haOff = rows.filter((row) => row[1] === 'Off').length;
+        const drsOff = rows.filter((row) => row[2] === 'Off').length;
+        const recommendations = [];
+        if (haOff) {
+          recommendations.push('* Enable vSphere HA on clusters without coverage → automates failover → protects service availability.');
+        }
+        if (drsOff) {
+          recommendations.push('* Activate DRS for load balancing → improves workload placement → reduces manual tuning effort.');
+        }
+        if (!recommendations.length) {
+          recommendations.push('* Periodically test HA/DRS behaviour with maintenance windows → validates policy efficacy → keeps recovery readiness high.');
+        }
+        return `**Table 11: Cluster HA & DRS**\n${table}\nRecommendation 11:\n${recommendations.join('\n')}`;
+      }
+
+      buildCdTable(ctx) {
+        const { vcd } = ctx;
+        let connected = 0;
+        let disconnected = 0;
+        vcd.rows.forEach((row) => {
+          const conn = toBoolean(getValue(row, ['connected']));
+          if (conn) connected += 1; else disconnected += 1;
+        });
+        const table = markdownTable(['Device', '#Connected', '#Disconnected'], [
+          ['CD/DVD', formatInteger(connected), formatInteger(disconnected)]
+        ]);
+        const recommendations = [];
+        if (CD_CONNECTED_WARN && connected) {
+          recommendations.push('* Disconnect virtual CD/DVD devices post-build → avoids vMotion/HA blockers → reduces security exposure.');
+        } else {
+          recommendations.push('* Keep ISO usage governed with automation → ensures compliance → limits attack surface.');
+        }
+        return `**Table 12: VM CD/DVD Devices**\n${table}\nRecommendation 12:\n${recommendations.join('\n')}`;
+      }
+
+      buildToolsTable(ctx) {
+        const { vtools } = ctx;
+        let running = 0;
+        let notRunning = 0;
+        const versionCounts = new Map();
+        vtools.rows.forEach((row) => {
+          const statusRaw = getValue(row, ['toolsrunningstatus', 'status']);
+          const status = String(statusRaw || '').toLowerCase();
+          if (status.includes('running')) running += 1; else notRunning += 1;
+          const version = getValue(row, ['toolsversion', 'version']) || 'Unknown';
+          versionCounts.set(version, (versionCounts.get(version) || 0) + 1);
+        });
+        const compliance = vtools.rows.length ? (running / vtools.rows.length) * 100 : null;
+        const versionSummary = Array.from(versionCounts.entries()).map(([ver, count]) => `${ver}: ${count}`).join('; ') || '—';
+        const table = markdownTable(['Tools Status', '#VMs', 'Tools Versions'], [
+          ['Running', formatInteger(running), versionSummary],
+          ['Not Running', formatInteger(notRunning), '—']
+        ]);
+        const recommendations = [];
+        if (compliance !== null && compliance < TOOLS_COMPLIANCE_TARGET) {
+          recommendations.push(`* Raise VMware Tools compliance (${formatNumber(compliance, 1)}% < ${TOOLS_COMPLIANCE_TARGET}%) → enables quiesced backups → improves guest manageability.`);
+        } else {
+          recommendations.push('* Maintain >95% VMware Tools compliance via lifecycle policy → preserves guest operations → supports smooth maintenance.');
+        }
+        recommendations.push('* Align Tools versions with OS baselines → ensures driver currency → reduces support incidents.');
+        return `**Table 13: VMware Tools**\n${table}\nRecommendation 13:\n${recommendations.join('\n')}`;
+      }
+
+      buildPortGroupSecurityTable(ctx) {
+        const { vswitch } = ctx;
+        let promAccept = 0;
+        let promDeny = 0;
+        let macAccept = 0;
+        let macDeny = 0;
+        vswitch.rows.forEach((row) => {
+          const prom = String(getValue(row, ['securitypromiscuousmode', 'promiscuousmode']) || '').toLowerCase();
+          const mac = String(getValue(row, ['securitymacchanges', 'macchanges']) || '').toLowerCase();
+          if (prom.includes('accept') || prom.includes('true') || prom.includes('enabled')) promAccept += 1; else if (prom) promDeny += 1;
+          if (mac.includes('accept') || mac.includes('true') || mac.includes('enabled')) macAccept += 1; else if (mac) macDeny += 1;
+        });
+        const rows = [
+          ['Promiscuous Mode', formatInteger(promAccept), formatInteger(promDeny)],
+          ['MAC Changes', formatInteger(macAccept), formatInteger(macDeny)]
+        ];
+        const table = markdownTable(['Setting', '#Accept', '#Deny'], rows);
+        const recommendations = [];
+        if ((PROMISCUOUS_ACCEPT_WARN && promAccept) || (MAC_CHANGES_ACCEPT_WARN && macAccept)) {
+          recommendations.push('* Tighten port-group security to Deny unless justified → mitigates packet sniffing/spoofing → supports PCI/GDPR controls.');
+        } else {
+          recommendations.push('* Periodically attest network security policies → sustains segmentation posture → reduces audit findings.');
+        }
+        return `**Table 14: Port-Group Security**\n${table}\nRecommendation 14:\n${recommendations.join('\n')}`;
+      }
+
+      buildHwVersionTable(ctx) {
+        const { vinfo } = ctx;
+        const counts = new Map();
+        let maxVersion = 0;
+        vinfo.rows.forEach((row) => {
+          const raw = getValue(row, ['hwversion', 'hardwareversion']) || 'Unknown';
+          const match = String(raw).match(/(\d+)/);
+          const num = match ? Number(match[1]) : null;
+          if (num !== null && Number.isFinite(num)) {
+            if (num > maxVersion) maxVersion = num;
+          }
+          counts.set(String(raw), (counts.get(String(raw)) || 0) + 1);
+        });
+        if (!maxVersion) maxVersion = 13;
+        const rows = Array.from(counts.entries()).map(([version, count]) => {
+          const match = String(version).match(/(\d+)/);
+          const num = match ? Number(match[1]) : null;
+          const outdated = num !== null ? (num < maxVersion) || (num < 13) : true;
+          return [version, formatInteger(count), outdated ? 'Y' : 'N'];
+        });
+        const table = markdownTable(['HW Version', '#VMs', 'Outdated (Y/N)'], rows.length ? rows : [['—', '—', '—']]);
+        const outdatedCount = rows.filter((row) => row[2] === 'Y').length;
+        const recommendations = [];
+        if (outdatedCount) {
+          recommendations.push('* Plan virtual hardware upgrades for outdated VMs → unlocks new features & drivers → increases stability and supportability.');
+        } else {
+          recommendations.push('* Keep VM hardware version aligned with vSphere baseline → ensures feature parity → simplifies lifecycle management.');
+        }
+        return `**Table 15: Virtual Hardware Version**\n${table}\nRecommendation 15:\n${recommendations.join('\n')}`;
+      }
+
+      buildTemplatesTable(ctx) {
+        const { vinfo } = ctx;
+        const rows = vinfo.rows
+          .filter((row) => toBoolean(getValue(row, ['template', 'istemplate'])))
+          .map((row) => [
+            getValue(row, ['vm']) || '—',
+            getValue(row, ['datastores', 'datastore']) || '—'
+          ]);
+        const table = markdownTable(['Template', 'Datastore'], rows.length ? rows : [['—', '—']]);
+        const recommendations = [];
+        if (rows.length) {
+          recommendations.push('* Review template currency and patch levels → accelerates secure deployments → avoids baseline drift.');
+        } else {
+          recommendations.push('* Maintain golden templates with governance → speeds VM provisioning → ensures consistent configuration.');
+        }
+        return `**Table 16: Templates**\n${table}\nRecommendation 16:\n${recommendations.join('\n')}`;
+      }
+
+      buildLatencyTable(ctx) {
+        const { vinfo } = ctx;
+        const rows = vinfo.rows
+          .filter((row) => String(getValue(row, ['latencysensitivity']) || '').toLowerCase() === 'high')
+          .map((row) => [getValue(row, ['vm']) || '—', 'High']);
+        const top = rows.slice(0, 10);
+        const table = markdownTable(['VM', 'Latency Sensitivity (Normal/High)'], top.length ? top : [['—', '—']]);
+        const recommendations = [];
+        if (rows.length) {
+          recommendations.push('* Validate high latency-sensitivity settings with workload owners → prevents mis-tuning → preserves cluster scheduling flexibility.');
+        } else {
+          recommendations.push('* Document criteria for High latency sensitivity → ensures only justified workloads use it → keeps DRS efficiency high.');
+        }
+        return `**Table 17: Latency Sensitivity (Top-10)**\n${table}\nRecommendation 17:\n${recommendations.join('\n')}`;
+      }
+
+      buildSrmTable(ctx) {
+        const { vinfo } = ctx;
+        let protectedCount = 0;
+        let unprotectedCount = 0;
+        let unknown = true;
+        vinfo.rows.forEach((row) => {
+          const protectedRaw = getValue(row, ['srmprotected', 'isprotected']);
+          if (protectedRaw === null || protectedRaw === undefined) return;
+          unknown = false;
+          if (toBoolean(protectedRaw)) protectedCount += 1; else unprotectedCount += 1;
+        });
+        const rows = [];
+        if (unknown) {
+          rows.push(['Unknown', '—']);
+          this.caveats.add('SRM protection columns not found.');
+        } else {
+          rows.push(['Protected by SRM', formatInteger(protectedCount)]);
+          rows.push(['Not Protected', formatInteger(unprotectedCount)]);
+        }
+        const table = markdownTable(['SRM Protection Status', '#VMs'], rows);
+        const recommendations = [];
+        if (!unknown && unprotectedCount) {
+          recommendations.push('* Expand SRM coverage to Tier-1 workloads → improves recovery posture → reduces business impact during DR.');
+        } else {
+          recommendations.push('* Periodically test SRM runbooks → validates failover readiness → keeps stakeholders confident.');
+        }
+        return `**Table 18: SRM Protection**\n${table}\nRecommendation 18:\n${recommendations.join('\n')}`;
+      }
+
+      buildDnsTable(ctx) {
+        const { vinfo } = ctx;
+        let known = 0;
+        let unknown = 0;
+        vinfo.rows.forEach((row) => {
+          const dns = getValue(row, ['dnsname', 'fqdn']);
+          if (dns && String(dns).trim()) known += 1; else unknown += 1;
+        });
+        const table = markdownTable(['DNS Status', '#VMs'], [
+          ['Known', formatInteger(known)],
+          ['Unknown', formatInteger(unknown)]
+        ]);
+        const recommendations = [];
+        if (unknown) {
+          recommendations.push('* Populate VM DNS names in inventory → enables tooling integrations → improves troubleshooting speed.');
+        } else {
+          recommendations.push('* Keep DNS records synced with VM inventory → prevents drift → accelerates incident response.');
+        }
+        return `**Table 19: DNS Status (Known/Unknown)**\n${table}\nRecommendation 19:\n${recommendations.join('\n')}`;
+      }
+
+      buildConnectionStateTable(ctx) {
+        const { vinfo } = ctx;
+        const counts = new Map();
+        vinfo.rows.forEach((row) => {
+          const state = String(getValue(row, ['connectionstate']) || 'Unknown');
+          counts.set(state, (counts.get(state) || 0) + 1);
+        });
+        const rows = Array.from(counts.entries()).map(([state, count]) => [state, formatInteger(count)]);
+        const table = markdownTable(['State', '#VMs'], rows.length ? rows : [['—', '—']]);
+        const recommendations = [];
+        if (counts.size > 1 || counts.get('connected') !== vinfo.rows.length) {
+          recommendations.push('* Investigate VMs not in Connected state → restores management visibility → avoids orphaned workloads.');
+        } else {
+          recommendations.push('* Continue monitoring vCenter connection health → ensures automation reachability → reduces incident triage time.');
+        }
+        return `**Table 20: Virtual Machine vCenter/ESXi Connection State (Connected/Disconnected/Inaccessible/Invalid/Orphaned)**\n${table}\nRecommendation 20:\n${recommendations.join('\n')}`;
+      }
+
+      buildOsAlignmentTable(ctx) {
+        const { vinfo } = ctx;
+        let aligned = 0;
+        let different = 0;
+        vinfo.rows.forEach((row) => {
+          const configured = String(getValue(row, ['guestos', 'configuredos']) || '').toLowerCase();
+          const tools = String(getValue(row, ['toolsos', 'guestfullname', 'toolsosreported']) || '').toLowerCase();
+          if (!configured && !tools) return;
+          if (configured === tools || !configured || !tools) {
+            aligned += 1;
+          } else {
+            different += 1;
+          }
+        });
+        const rows = [
+          ['Aligned', formatInteger(aligned)],
+          ['Different', formatInteger(different)]
+        ];
+        const table = markdownTable(['Status', '#VMs'], rows);
+        const recommendations = [];
+        if (different) {
+          recommendations.push('* Align configured guest OS with VMware Tools-reported OS → ensures correct drivers/patch baselines → reduces support escalations.');
+        } else {
+          recommendations.push('* Maintain OS inventory reconciliation in CMDB → keeps compliance evidence → streamlines audits.');
+        }
+        return `**Table 21: OS Alignment Config vs Tools (Align/Different)**\n${table}\nRecommendation 21:\n${recommendations.join('\n')}`;
+      }
+
+      buildNicStateTable(ctx) {
+        const { vnic } = ctx;
+        let connected = 0;
+        let disconnected = 0;
+        vnic.rows.forEach((row) => {
+          const status = toBoolean(getValue(row, ['connected']));
+          if (status) connected += 1; else disconnected += 1;
+        });
+        const table = markdownTable(['NIC Status', '#VMs'], [
+          ['Connected', formatInteger(connected)],
+          ['Disconnected', formatInteger(disconnected)]
+        ]);
+        const recommendations = [];
+        if (disconnected) {
+          recommendations.push('* Remove unused/disconnected vNICs → simplifies troubleshooting → reduces attack surface.');
+        } else {
+          recommendations.push('* Keep NIC connectivity standards documented → preserves clean configurations → eases change control.');
+        }
+        return `**Table 22: VM NIC Connection State (Connected/Disconnected)**\n${table}\nRecommendation 22:\n${recommendations.join('\n')}`;
+      }
+
+      buildNicCountTable(ctx) {
+        const { vnic } = ctx;
+        const counts = new Map();
+        vnic.rows.forEach((row) => {
+          const vm = getValue(row, ['vm']) || '—';
+          counts.set(vm, (counts.get(vm) || 0) + 1);
+        });
+        const rows = Array.from(counts.entries()).map(([vm, count]) => [vm, formatInteger(count)]);
+        rows.sort((a, b) => {
+          const diff = Number(b[1].replace(/[^0-9]/g, '')) - Number(a[1].replace(/[^0-9]/g, ''));
+          if (diff !== 0) return diff;
+          return a[0].localeCompare(b[0]);
+        });
+        const top = rows.slice(0, 10);
+        const table = markdownTable(['VM', '#vNICs'], top.length ? top : [['—', '—']]);
+        const recommendations = [];
+        if (top.length) {
+          recommendations.push('* Validate multi-NIC VMs for necessity and load balancing → avoids complexity → strengthens network governance.');
+        }
+        return `**Table 23: Network Adapters (Top-10 by count)**\n${table}\nRecommendation 23:\n${recommendations.join('\n')}`;
+      }
+
+      buildBackupTable(ctx) {
+        const { vinfo } = ctx;
+        let protectedCount = 0;
+        let unprotectedCount = 0;
+        let unknown = true;
+        vinfo.rows.forEach((row) => {
+          const protectedRaw = getValue(row, ['backupstatus', 'isprotected', 'backup', 'protected']);
+          if (protectedRaw === null || protectedRaw === undefined || protectedRaw === '') return;
+          unknown = false;
+          if (toBoolean(protectedRaw)) protectedCount += 1; else unprotectedCount += 1;
+        });
+        let rows = [];
+        if (unknown) {
+          rows = [['Unknown', '—']];
+          this.caveats.add('Backup protection columns not found.');
+        } else {
+          rows = [
+            ['Protected', formatInteger(protectedCount)],
+            ['Not Protected', formatInteger(unprotectedCount)]
+          ];
+        }
+        const table = markdownTable(['Backup Status', '#VMs'], rows);
+        const recommendations = [];
+        if (!unknown && unprotectedCount) {
+          recommendations.push('* Onboard unprotected VMs into backup policy → mitigates data loss risk → improves recoverability SLAs.');
+        } else {
+          recommendations.push('* Periodically validate backup job success via restores → assures recoverability → satisfies audit controls.');
+        }
+        return `**Table 24: Backup Status (Protected/Not Protected**\n${table}\nRecommendation 24:\n${recommendations.join('\n')}`;
+      }
+
+      buildEvcTable(ctx) {
+        const { vcluster, vinfo } = ctx;
+        const counts = new Map();
+        if (sheetHasColumn(vcluster, ['evcmode'])) {
+          vcluster.rows.forEach((row) => {
+            const mode = getValue(row, ['evcmode']) || 'None';
+            counts.set(mode, (counts.get(mode) || 0) + 1);
+          });
+        } else if (sheetHasColumn(vinfo, ['evcmode'])) {
+          vinfo.rows.forEach((row) => {
+            const mode = getValue(row, ['evcmode']) || 'None';
+            counts.set(mode, (counts.get(mode) || 0) + 1);
+          });
+        } else {
+          this.caveats.add('EVC mode column missing.');
+        }
+        const rows = counts.size
+          ? Array.from(counts.entries()).map(([mode, count]) => [mode, formatInteger(count)])
+          : [['—', '—']];
+        const table = markdownTable(['EVC Mode', '#Occurrences'], rows);
+        const recommendations = [];
+        if (counts.size) {
+          recommendations.push('* Review EVC baselines versus CPU roadmap → ensures vMotion compatibility → simplifies hardware refresh planning.');
+        } else {
+          recommendations.push('* Document EVC design per cluster → avoids surprise CPU compatibility issues → keeps migrations seamless.');
+        }
+        return `**Table 25: EVC Mode Distribution**\n${table}\nRecommendation 25:\n${recommendations.join('\n')}`;
+      }
+
+      buildVmotionTable(ctx) {
+        const { vcluster, vhost } = ctx;
+        const rows = [];
+        if (sheetHasColumn(vcluster, ['numvmotions', 'vmotions'])) {
+          vcluster.rows.forEach((row) => {
+            const cluster = getValue(row, ['cluster']) || '—';
+            const count = toNumber(getValue(row, ['numvmotions', 'vmotions']));
+            rows.push([cluster, formatInteger(count)]);
+          });
+        } else if (sheetHasColumn(vhost, ['numvmotions', 'vmotions'])) {
+          const map = new Map();
+          vhost.rows.forEach((row) => {
+            const cluster = getValue(row, ['cluster']) || '—';
+            const count = toNumber(getValue(row, ['numvmotions', 'vmotions']));
+            map.set(cluster, (map.get(cluster) || 0) + (count || 0));
+          });
+          map.forEach((count, cluster) => rows.push([cluster, formatInteger(count)]));
+        } else {
+          rows.push(['—', '—']);
+          this.caveats.add('vMotion count columns not found.');
+        }
+        const table = markdownTable(['Cluster', '#vMotions'], rows);
+        const recommendations = [];
+        recommendations.push('* Monitor vMotion activity trends → validates DRS efficiency → detects imbalance early.');
+        recommendations.push('* Correlate vMotion spikes with maintenance windows → fine-tunes automation policies → limits performance blips.');
+        return `**Table 26: Cluster vMotion**\n${table}\nRecommendation 26:\n${recommendations.join('\n')}`;
+      }
+
+      buildAdmissionControlTable(ctx) {
+        const { vcluster } = ctx;
+        const rows = vcluster.rows.map((row) => [
+          getValue(row, ['cluster']) || '—',
+          getValue(row, ['admissioncontrol', 'admissioncontrolpolicy']) || '—'
+        ]);
+        const table = markdownTable(['Cluster', 'Admission Control'], rows.length ? rows : [['—', '—']]);
+        const recommendations = [];
+        if (rows.some((row) => String(row[1]).toLowerCase().includes('disabled'))) {
+          recommendations.push('* Enable HA admission control where disabled → protects failover capacity → reduces outage risk during host failures.');
+        } else {
+          recommendations.push('* Periodically review admission control policy vs SLA → ensures reserved capacity matches business expectations → avoids under/over-protection.');
+        }
+        return `**Table 27: Cluster Admission Control**\n${table}\nRecommendation 27:\n${recommendations.join('\n')}`;
+      }
+
+      buildReservationTable(ctx) {
+        const { vinfo } = ctx;
+        let cpuReserved = 0;
+        let cpuNotReserved = 0;
+        let memReserved = 0;
+        let memNotReserved = 0;
+        vinfo.rows.forEach((row) => {
+          const cpuRes = toNumber(getValue(row, ['cpureservationmhz', 'cpureservation']));
+          const memRes = toNumber(getValue(row, ['memreservationmb', 'memreservation']));
+          if (cpuRes) cpuReserved += 1; else cpuNotReserved += 1;
+          if (memRes) memReserved += 1; else memNotReserved += 1;
+        });
+        const cpuTable = markdownTable(['CPU Reservation Status', '#VMs'], [
+          ['Reserved', formatInteger(cpuReserved)],
+          ['No Reservation', formatInteger(cpuNotReserved)]
+        ]);
+        const memTable = markdownTable(['Memory Reservation Status', '#VMs'], [
+          ['Reserved', formatInteger(memReserved)],
+          ['No Reservation', formatInteger(memNotReserved)]
+        ]);
+        const recommendations = [];
+        if (cpuReserved || memReserved) {
+          recommendations.push('* Review reservation use to ensure only critical workloads are pinned → prevents resource starvation → keeps consolidation ratios healthy.');
+        } else {
+          recommendations.push('* Document reservation policy for exceptional workloads → expedites approvals → balances fairness and performance.');
+        }
+        return `**Table 28: CPU and Memory Reservation (Reservation/No Reservation)**\n${cpuTable}\n${memTable}\nRecommendation 28:\n${recommendations.join('\n')}`;
+      }
+
+      buildHotAddTable(ctx) {
+        const { vinfo } = ctx;
+        let cpuEnabled = 0;
+        let cpuDisabled = 0;
+        let memEnabled = 0;
+        let memDisabled = 0;
+        vinfo.rows.forEach((row) => {
+          if (toBoolean(getValue(row, ['cpuhotaddenabled', 'cpuhotadd']))) cpuEnabled += 1; else cpuDisabled += 1;
+          if (toBoolean(getValue(row, ['memhotaddenabled', 'memoryhotadd']))) memEnabled += 1; else memDisabled += 1;
+        });
+        const cpuTable = markdownTable(['CPU Hot Add Status', '#VMs'], [
+          ['Enabled', formatInteger(cpuEnabled)],
+          ['Disabled', formatInteger(cpuDisabled)]
+        ]);
+        const memTable = markdownTable(['Memory Hot Add Status', '#VMs'], [
+          ['Enabled', formatInteger(memEnabled)],
+          ['Disabled', formatInteger(memDisabled)]
+        ]);
+        const recommendations = [];
+        if (cpuEnabled || memEnabled) {
+          recommendations.push(`* Disable default hot-add unless justified (policy: ${HOT_ADD_POLICY}) → prevents NUMA scheduling issues → preserves performance predictability.`);
+        } else {
+          recommendations.push('* Keep hot-add disabled by default with documented exceptions → minimises complexity → improves capacity forecasting accuracy.');
+        }
+        return `**Table 29: CPU and /Memory Hot-Add (Enabled/Disabled)**\n${cpuTable}\n${memTable}\nRecommendation 29:\n${recommendations.join('\n')}`;
+      }
+
+      buildLargestDiskTable(ctx) {
+        const { vdisk } = ctx;
+        const totals = new Map();
+        vdisk.rows.forEach((row) => {
+          const vm = getValue(row, ['vm']) || '—';
+          const size = toNumber(getValue(row, ['capacitygb', 'capacity']));
+          if (!totals.has(vm)) totals.set(vm, 0);
+          if (size !== null) totals.set(vm, totals.get(vm) + size);
+        });
+        const rows = Array.from(totals.entries()).map(([vm, size]) => [vm, formatNumber(size, 1)]);
+        rows.sort((a, b) => Number(b[1]) - Number(a[1]));
+        const top = rows.slice(0, 10);
+        const table = markdownTable(['VM', 'Total vDisk (GB)'], top.length ? top : [['—', '—']]);
+        const recommendations = [];
+        if (top.length) {
+          recommendations.push('* Target storage reclamation on largest VMs (Top-10) → frees capacity quickly → defers storage spend.');
+        }
+        return `**Table 30: Largest vDisk (Top-10 VMs)**\n${table}\nRecommendation 30:\n${recommendations.join('\n')}`;
+      }
+
+      buildVendorModelTable(ctx) {
+        const { vhost } = ctx;
+        const counts = new Map();
+        vhost.rows.forEach((row) => {
+          const vendor = getValue(row, ['vendor']) || 'Unknown Vendor';
+          const model = getValue(row, ['model']) || 'Unknown Model';
+          const key = `${vendor} / ${model}`;
+          counts.set(key, (counts.get(key) || 0) + 1);
+        });
+        const rows = Array.from(counts.entries()).map(([key, count]) => [key, formatInteger(count)]);
+        const table = markdownTable(['Vendor/Model', '#Hosts'], rows.length ? rows : [['—', '—']]);
+        const recommendations = [];
+        if (rows.length) {
+          recommendations.push('* Align hardware standards with lifecycle plans → simplifies spares/support → reduces mean-time-to-repair.');
+        }
+        return `**Table 31a: Physical Server Vendor/Model**\n${table}\nRecommendation 31a:\n${recommendations.join('\n')}`;
+      }
+
+      buildCpuModelTable(ctx) {
+        const { vhost } = ctx;
+        const map = new Map();
+        let totalCores = 0;
+        vhost.rows.forEach((row) => {
+          const cpuModel = getValue(row, ['cpumodel', 'cpu']) || 'Unknown';
+          const packages = toNumber(getValue(row, ['cpupackages', 'cpusockets', 'sockets'])) || 0;
+          const coresPer = toNumber(getValue(row, ['cpucorepersocket', 'corespersocket', 'numcorespersocket']));
+          const totalCoresRow = toNumber(getValue(row, ['cpucores', 'numcpucores', 'totalcores']));
+          const cores = totalCoresRow || (packages && coresPer ? packages * coresPer : 0);
+          totalCores += cores;
+          if (!map.has(cpuModel)) {
+            map.set(cpuModel, { hosts: 0, packages: 0, cores: 0 });
+          }
+          const stats = map.get(cpuModel);
+          stats.hosts += 1;
+          stats.packages += packages;
+          stats.cores += cores;
+        });
+        const rows = Array.from(map.entries()).map(([model, stats]) => [
+          model,
+          formatInteger(stats.hosts),
+          formatInteger(stats.packages),
+          formatInteger(stats.cores)
+        ]);
+        if (!rows.length) rows.push(['—', '—', '—', '—']);
+        rows.push(['**Total Cores**', '—', '—', formatInteger(totalCores)]);
+        const table = markdownTable(['CPU Model', '#Hosts', '#CPU Packages', '#Cores'], rows);
+        const recommendations = [];
+        recommendations.push('* Use CPU model data to plan EVC baselines and licensing → ensures compatibility → optimises procurement.');
+        return `**Table 31b: Host CPU Model & Totals**\n${table}\nRecommendation 31b:\n${recommendations.join('\n')}`;
+      }
+
+      buildUplinkPolicyTable(ctx) {
+        const { vswitch } = ctx;
+        const counts = new Map();
+        vswitch.rows.forEach((row) => {
+          const policy = getValue(row, ['policylb', 'policyloadbalancing', 'loadbalancing', 'uplinkpolicy']) || 'Unknown';
+          counts.set(policy, (counts.get(policy) || 0) + 1);
+        });
+        const rows = Array.from(counts.entries()).map(([policy, count]) => [policy, formatInteger(count)]);
+        const table = markdownTable(['Load Balancing Policy', '#Occurrences'], rows.length ? rows : [['—', '—']]);
+        const recommendations = [];
+        if (rows.length > 1) {
+          recommendations.push('* Standardise uplink load-balancing policies across switches → ensures predictable network behaviour → reduces troubleshooting time.');
+        } else {
+          recommendations.push('* Document chosen teaming policy with design rationale → keeps operations aligned → avoids drift.');
+        }
+        return `**Table 32: Uplink Teaming Policy**\n${table}\nRecommendation 32:\n${recommendations.join('\n')}`;
+      }
+
+      buildVlanTable(ctx) {
+        const { vnic, vportgroup } = ctx;
+        const vlanMap = new Map();
+        vportgroup.rows.forEach((row) => {
+          const pg = getValue(row, ['portgroup', 'name']) || '—';
+          const vlan = getValue(row, ['vlanid', 'vlan']) || '—';
+          vlanMap.set(pg, vlan);
+        });
+        const counts = new Map();
+        vnic.rows.forEach((row) => {
+          const vm = getValue(row, ['vm']) || '—';
+          const pg = getValue(row, ['portgroup', 'pg']) || '—';
+          const vlan = vlanMap.get(pg) || 'Unknown';
+          const key = String(vlan);
+          if (!counts.has(key)) counts.set(key, new Set());
+          counts.get(key).add(vm);
+        });
+        const rows = Array.from(counts.entries()).map(([vlan, vmSet]) => [vlan, formatInteger(vmSet.size)]);
+        rows.sort((a, b) => Number(b[1]) - Number(a[1]));
+        const top = rows.slice(0, 10);
+        const table = markdownTable(['VLAN', '#VMs'], top.length ? top : [['—', '—']]);
+        const recommendations = [];
+        if (top.length) {
+          recommendations.push('* Review high-density VLANs for segmentation and QoS → avoids broadcast storms → keeps network performance strong.');
+        }
+        return `**Table 33: VLAN Distribution (Top-10)**\n${table}\nRecommendation 33:\n${recommendations.join('\n')}`;
+      }
+
+      buildVmsPerDatastoreTable(ctx) {
+        const { vdisk } = ctx;
+        const map = new Map();
+        vdisk.rows.forEach((row) => {
+          const datastore = getValue(row, ['datastore']) || '—';
+          const vm = getValue(row, ['vm']) || '—';
+          if (!map.has(datastore)) map.set(datastore, new Set());
+          map.get(datastore).add(vm);
+        });
+        const rows = Array.from(map.entries()).map(([ds, vmSet]) => [ds, formatInteger(vmSet.size)]);
+        rows.sort((a, b) => Number(b[1]) - Number(a[1]));
+        const top = rows.slice(0, 10);
+        const table = markdownTable(['Datastore', '#VMs'], top.length ? top : [['—', '—']]);
+        const recommendations = [];
+        if (top.length) {
+          recommendations.push('* Balance VM placement across datastores → reduces hotspot risk → extends array performance.');
+        }
+        return `**Table 34: VMs per Datastore (Top-10)**\n${table}\nRecommendation 34:\n${recommendations.join('\n')}`;
+      }
+
+      buildHostsByVmTable(ctx) {
+        const { vinfo } = ctx;
+        const map = new Map();
+        vinfo.rows.forEach((row) => {
+          const host = getValue(row, ['host']) || '—';
+          map.set(host, (map.get(host) || 0) + 1);
+        });
+        const rows = Array.from(map.entries()).map(([host, count]) => [host, formatInteger(count)]);
+        rows.sort((a, b) => Number(b[1]) - Number(a[1]));
+        const top = rows.slice(0, 10);
+        const table = markdownTable(['Host', '#VMs'], top.length ? top : [['—', '—']]);
+        const recommendations = [];
+        if (top.length) {
+          recommendations.push('* Monitor host VM density (Top-10) → identifies imbalance early → informs DRS tuning.');
+        }
+        return `**Table 35: Top-10 Hosts by VM Count**\n${table}\nRecommendation 35:\n${recommendations.join('\n')}`;
+      }
+
+      buildMultipathTable(ctx) {
+        const { vpath } = ctx;
+        const counts = new Map();
+        vpath.rows.forEach((row) => {
+          const policy = getValue(row, ['policy']) || 'Unknown';
+          counts.set(policy, (counts.get(policy) || 0) + 1);
+        });
+        const rows = Array.from(counts.entries()).map(([policy, count]) => [policy, formatInteger(count)]);
+        const table = markdownTable(['Policy', '#Hosts'], rows.length ? rows : [['—', '—']]);
+        const recommendations = [];
+        if (rows.length > 1) {
+          recommendations.push('* Standardise multipath policy per storage array best practice → balances I/O → reduces incident rates.');
+        }
+        return `**Table 36: Multipath Policy**\n${table}\nRecommendation 36:\n${recommendations.join('\n')}`;
+      }
+
+      buildHostDnsNtpTable(ctx) {
+        const { vhost } = ctx;
+        let dnsConfigured = 0;
+        let dnsMissing = 0;
+        let ntpConfigured = 0;
+        let ntpMissing = 0;
+        vhost.rows.forEach((row) => {
+          const dns = getValue(row, ['dnsservers', 'dns']) || '';
+          const ntp = getValue(row, ['ntpservers', 'ntp']) || '';
+          if (String(dns).trim()) dnsConfigured += 1; else dnsMissing += 1;
+          if (String(ntp).trim()) ntpConfigured += 1; else ntpMissing += 1;
+        });
+        const dnsTable = markdownTable(['DNS Configuration Status', '#Hosts'], [
+          ['Configured', formatInteger(dnsConfigured)],
+          ['Not Configured', formatInteger(dnsMissing)]
+        ]);
+        const ntpTable = markdownTable(['NTP Configuration Status', '#Hosts'], [
+          ['Configured', formatInteger(ntpConfigured)],
+          ['Not Configured', formatInteger(ntpMissing)]
+        ]);
+        const recommendations = [];
+        if ((dnsMissing || ntpMissing) && NTP_DNS_REQUIRED) {
+          recommendations.push('* Configure DNS/NTP on all hosts → stabilises authentication & logging → prevents HA/DRS anomalies.');
+        } else {
+          recommendations.push('* Periodically verify host DNS/NTP alignment with corporate standards → keeps certificates and logs valid → reduces troubleshooting.');
+        }
+        return `**Table 37: Host DNS/NTP Consfiguration Status (Configured/Not Configured)**\n${dnsTable}\n${ntpTable}\nRecommendation 37:\n${recommendations.join('\n')}`;
+      }
+
+      buildAssessmentSummary(ctx) {
+        const overcommitStats = this.computeOvercommit(ctx);
+        const highCpu = overcommitStats.filter((item) => item.cpuRatio !== null && item.cpuRatio > CPU_OVERCOMMIT_WARN).length;
+        const highMem = overcommitStats.filter((item) => item.memRatio !== null && item.memRatio > MEM_OVERCOMMIT_WARN).length;
+        const datastoreLow = this.countLowDatastores(ctx);
+        const snapshotIssues = this.computeSnapshotIssues(ctx);
+        const toolsStats = this.computeToolsCompliance(ctx);
+        const cdConnected = this.countCdConnected(ctx);
+        const portSecurity = this.computePortSecurity(ctx);
+        const poweredOff = this.countPoweredOff(ctx);
+        const backup = this.computeBackupCoverage(ctx);
+        const haStatus = this.computeHaStatus(ctx);
+        const hostTime = this.computeHostTimeStatus(ctx);
+        const osMisalign = this.countOsMisalignment(ctx);
+        const connectionIssues = this.countConnectionIssues(ctx);
+        const consolidationNeeded = this.countConsolidationNeeded(ctx);
+        const vmDensity = this.computeVmDensity(ctx);
+
+        const rag = (score) => (score >= 2 ? 'Red' : score >= 1 ? 'Amber' : 'Green');
+        const summarise = (actions, benefit) => {
+          if (!actions.length) actions.push('Maintain current operating cadence');
+          return `${actions.slice(0, 2).join('; ')} ${benefit}`.trim();
+        };
+
+        const availabilityActions = [];
+        let availabilityScore = 0;
+        if (haStatus.haOff) {
+          availabilityScore += 1;
+          availabilityActions.push(`Enable HA on ${formatInteger(haStatus.haOff)} cluster(s)`);
+        }
+        if (haStatus.drsOff) {
+          availabilityScore += 0.5;
+          availabilityActions.push(`Review DRS on ${formatInteger(haStatus.drsOff)} cluster(s)`);
+        }
+        if (hostTime.ntpMissing || hostTime.dnsMissing) {
+          availabilityScore += 1;
+          availabilityActions.push('Close host DNS/NTP gaps');
+        }
+        const availabilityRow = ['Availability', rag(availabilityScore), summarise(availabilityActions, '→ improves failover readiness.')];
+
+        const manageActions = [];
+        let manageScore = 0;
+        if (toolsStats.total && toolsStats.compliance < TOOLS_COMPLIANCE_TARGET) {
+          manageScore += 1;
+          manageActions.push(`Lift VMware Tools compliance (${formatNumber(toolsStats.compliance, 1)}%)`);
+        }
+        if (osMisalign) {
+          manageScore += 0.5;
+          manageActions.push(`Align guest OS metadata on ${formatInteger(osMisalign)} VM(s)`);
+        }
+        if (connectionIssues) {
+          manageScore += 0.5;
+          manageActions.push(`Resolve ${formatInteger(connectionIssues)} non-connected VM(s)`);
+        }
+        const manageRow = ['Manageability', rag(manageScore), summarise(manageActions, '→ strengthens operational control.')];
+
+        const perfActions = [];
+        let perfScore = 0;
+        if (highCpu || highMem) {
+          perfScore += 1;
+          perfActions.push(`Right-size ${formatInteger(highCpu + highMem)} overcommitted cluster(s)`);
+        }
+        if (datastoreLow) {
+          perfScore += 0.5;
+          perfActions.push(`Reclaim capacity on ${formatInteger(datastoreLow)} low-free datastore(s)`);
+        }
+        if (vmDensity.max && vmDensity.max > 40) {
+          perfScore += 0.5;
+          perfActions.push(`Rebalance hosts over ${formatNumber(vmDensity.max, 1)} VMs/host`);
+        }
+        const performanceRow = ['Performance', rag(perfScore), summarise(perfActions, '→ restores resource headroom.')];
+
+        const recoveryActions = [];
+        let recoveryScore = 0;
+        if (snapshotIssues.oldVms.size || snapshotIssues.largeVms.size) {
+          recoveryScore += 1;
+          recoveryActions.push(`Clear aged/large snapshots on ${formatInteger(snapshotIssues.issueVmCount)} VM(s)`);
+        }
+        if (backup.unprotected) {
+          recoveryScore += 1;
+          recoveryActions.push(`Onboard ${formatInteger(backup.unprotected)} VM(s) into backup policy`);
+        }
+        if (consolidationNeeded) {
+          recoveryScore += 0.5;
+          recoveryActions.push(`Resolve consolidation for ${formatInteger(consolidationNeeded)} VM(s)`);
+        }
+        const recoveryRow = ['Recoverability', rag(recoveryScore), summarise(recoveryActions, '→ boosts recovery assurance.')];
+
+        const securityActions = [];
+        let securityScore = 0;
+        if (cdConnected) {
+          securityScore += 0.5;
+          securityActions.push(`Disconnect ${formatInteger(cdConnected)} active CD/DVD device(s)`);
+        }
+        if (portSecurity.promAccept) {
+          securityScore += 0.5;
+          securityActions.push(`Tighten promiscuous mode on ${formatInteger(portSecurity.promAccept)} port-group(s)`);
+        }
+        if (portSecurity.macAccept) {
+          securityScore += 0.5;
+          securityActions.push(`Deny MAC changes on ${formatInteger(portSecurity.macAccept)} port-group(s)`);
+        }
+        const securityRow = ['Security', rag(securityScore), summarise(securityActions, '→ reduces attack surface & compliance risk.')];
+
+        const costActions = [];
+        let costScore = 0;
+        if (poweredOff) {
+          costScore += 0.5;
+          costActions.push(`Retire ${formatInteger(poweredOff)} powered-off VM(s)`);
+        }
+        if (snapshotIssues.largeVms.size) {
+          costScore += 0.5;
+          costActions.push(`Reclaim storage from ${formatInteger(snapshotIssues.largeVms.size)} snapshot-heavy VM(s)`);
+        }
+        if (overcommitStats.length && highCpu === 0 && highMem === 0) {
+          costActions.push('Sustain rightsizing cadence');
+        }
+        const costRow = ['Cost', rag(costScore), summarise(costActions, '→ lowers run-rate and defers capex.')];
+
+        const table = markdownTable(['Pillar', 'RAG', 'Summary / Top Actions'], [
+          availabilityRow,
+          manageRow,
+          performanceRow,
+          recoveryRow,
+          securityRow,
+          costRow
+        ]);
+
+        const quickWins = [];
+        if (haStatus.haOff) quickWins.push({ score: 5, text: `Enable HA on ${formatInteger(haStatus.haOff)} cluster(s) → reduces outage exposure.` });
+        if (hostTime.ntpMissing || hostTime.dnsMissing) quickWins.push({ score: 4, text: 'Configure DNS/NTP on all hosts → stabilises HA/DRS operations.' });
+        if (snapshotIssues.issueVmCount) quickWins.push({ score: 4, text: `Clean aged/large snapshots on ${formatInteger(snapshotIssues.issueVmCount)} VM(s) → frees storage & improves backups.` });
+        if (backup.unprotected) quickWins.push({ score: 5, text: `Protect ${formatInteger(backup.unprotected)} VM(s) with backups/SRM → cuts data-loss risk.` });
+        if (toolsStats.total && toolsStats.compliance < TOOLS_COMPLIANCE_TARGET) quickWins.push({ score: 3, text: `Raise VMware Tools compliance to ${TOOLS_COMPLIANCE_TARGET}% → enhances manageability & security.` });
+        if (poweredOff) quickWins.push({ score: 3, text: `Decommission ${formatInteger(poweredOff)} powered-off VM(s) → releases compute & licensing spend.` });
+        if (datastoreLow) quickWins.push({ score: 3, text: `Reclaim space on ${formatInteger(datastoreLow)} low-free datastore(s) → avoids storage emergencies.` });
+        if (cdConnected) quickWins.push({ score: 2, text: 'Disconnect lingering ISO devices → reduces security and mobility issues.' });
+        quickWins.sort((a, b) => b.score - a.score);
+        const topWins = quickWins.slice(0, 3).map((item) => `* ${item.text}`);
+        if (!topWins.length) {
+          topWins.push('* Maintain quarterly RVTools hygiene reviews → sustains proactive operations.');
+        }
+
+        return `**Table 38: Assessment Summary (Pillars)**\n${table}\nRecommendation 38:\n${topWins.join('\n')}`;
+      }
+
+      computeOvercommit(ctx) {
+        const { vcluster, vhost, vinfo } = ctx;
+        const stats = new Map();
+        const ensure = (clusterName) => {
+          const key = clusterName || '—';
+          if (!stats.has(key)) {
+            stats.set(key, {
+              cluster: key,
+              vmVcpu: 0,
+              vmVram: 0,
+              hostCores: 0,
+              hostMemoryGb: 0
+            });
+          }
+          return stats.get(key);
+        };
+        vcluster.rows.forEach((row) => ensure(String(getValue(row, ['cluster']) || '—')));
+        vinfo.rows.forEach((row) => {
+          const stat = ensure(String(getValue(row, ['cluster']) || '—'));
+          const vcpu = toNumber(getValue(row, ['vcpu', 'numcpu']));
+          const memMb = toNumber(getValue(row, ['memorymb', 'memory']));
+          if (vcpu !== null) stat.vmVcpu += vcpu;
+          if (memMb !== null) stat.vmVram += memMb / 1024;
+        });
+        vhost.rows.forEach((row) => {
+          const stat = ensure(String(getValue(row, ['cluster']) || '—'));
+          const packages = toNumber(getValue(row, ['cpupackages', 'cpusockets', 'sockets', 'cpupackage']));
+          const coresPerPackage = toNumber(getValue(row, ['cpucorepersocket', 'corespersocket', 'numcorespersocket']));
+          const totalCores = toNumber(getValue(row, ['cpucores', 'numcpucores', 'totalcores']));
+          let cores = null;
+          if (packages !== null && coresPerPackage !== null) {
+            cores = packages * coresPerPackage;
+          } else if (totalCores !== null) {
+            cores = totalCores;
+          }
+          if (cores !== null) stat.hostCores += cores;
+          const memMb = toNumber(getValue(row, ['memorymb', 'memory']));
+          if (memMb !== null) stat.hostMemoryGb += memMb / 1024;
+        });
+        return Array.from(stats.values()).map((stat) => ({
+          cluster: stat.cluster,
+          cpuRatio: stat.hostCores ? stat.vmVcpu / stat.hostCores : null,
+          memRatio: stat.hostMemoryGb ? stat.vmVram / stat.hostMemoryGb : null
+        }));
+      }
+
+      computeSnapshotIssues(ctx) {
+        const { vsnapshot } = ctx;
+        const oldVms = new Set();
+        const largeVms = new Set();
+        const issueVms = new Set();
+        vsnapshot.rows.forEach((row) => {
+          const vm = String(getValue(row, ['vm']) || '—');
+          const size = toNumber(getValue(row, ['snapshotsizegb', 'sizegb', 'snapshotsize']));
+          const created = parseDate(getValue(row, ['createtime', 'created']));
+          if (created) {
+            const age = diffInDays(created, this.now);
+            if (age !== null && age > SNAPSHOT_AGE_WARN_DAYS) {
+              oldVms.add(vm);
+              issueVms.add(vm);
+            }
+          }
+          if (size !== null && size > SNAPSHOT_SIZE_WARN_GB) {
+            largeVms.add(vm);
+            issueVms.add(vm);
+          }
+        });
+        return {
+          oldVms,
+          largeVms,
+          issueVmCount: issueVms.size
+        };
+      }
+
+      computeToolsCompliance(ctx) {
+        const { vtools } = ctx;
+        let running = 0;
+        vtools.rows.forEach((row) => {
+          const status = String(getValue(row, ['toolsrunningstatus', 'status']) || '').toLowerCase();
+          if (status.includes('running')) running += 1;
+        });
+        const total = vtools.rows.length;
+        const compliance = total ? (running / total) * 100 : 0;
+        return { running, total, compliance };
+      }
+
+      countCdConnected(ctx) {
+        const { vcd } = ctx;
+        let connected = 0;
+        vcd.rows.forEach((row) => {
+          if (toBoolean(getValue(row, ['connected']))) connected += 1;
+        });
+        return connected;
+      }
+
+      computePortSecurity(ctx) {
+        const { vswitch } = ctx;
+        let promAccept = 0;
+        let macAccept = 0;
+        vswitch.rows.forEach((row) => {
+          const prom = String(getValue(row, ['securitypromiscuousmode', 'promiscuousmode']) || '').toLowerCase();
+          const mac = String(getValue(row, ['securitymacchanges', 'macchanges']) || '').toLowerCase();
+          if (prom.includes('accept') || prom.includes('true') || prom.includes('enabled')) promAccept += 1;
+          if (mac.includes('accept') || mac.includes('true') || mac.includes('enabled')) macAccept += 1;
+        });
+        return { promAccept, macAccept };
+      }
+
+      countPoweredOff(ctx) {
+        const { vinfo } = ctx;
+        return vinfo.rows.filter((row) => ['poweredoff', 'off'].includes(String(getValue(row, ['powerstate']) || '').toLowerCase())).length;
+      }
+
+      computeBackupCoverage(ctx) {
+        const { vinfo } = ctx;
+        let protectedCount = 0;
+        let unprotectedCount = 0;
+        let known = false;
+        vinfo.rows.forEach((row) => {
+          const val = getValue(row, ['backupstatus', 'isprotected', 'backup', 'protected']);
+          if (val === null || val === undefined || val === '') return;
+          known = true;
+          if (toBoolean(val)) protectedCount += 1; else unprotectedCount += 1;
+        });
+        return {
+          unprotected: known ? unprotectedCount : 0,
+          protected: known ? protectedCount : 0
+        };
+      }
+
+      computeHaStatus(ctx) {
+        const { vcluster } = ctx;
+        let haOff = 0;
+        let drsOff = 0;
+        vcluster.rows.forEach((row) => {
+          if (!toBoolean(getValue(row, ['haenabled', 'ha']))) haOff += 1;
+          if (!toBoolean(getValue(row, ['drsenabled', 'drs']))) drsOff += 1;
+        });
+        return { haOff, drsOff };
+      }
+
+      computeHostTimeStatus(ctx) {
+        const { vhost } = ctx;
+        let dnsMissing = 0;
+        let ntpMissing = 0;
+        vhost.rows.forEach((row) => {
+          if (!String(getValue(row, ['dnsservers', 'dns']) || '').trim()) dnsMissing += 1;
+          if (!String(getValue(row, ['ntpservers', 'ntp']) || '').trim()) ntpMissing += 1;
+        });
+        return { dnsMissing, ntpMissing };
+      }
+
+      countOsMisalignment(ctx) {
+        const { vinfo } = ctx;
+        let count = 0;
+        vinfo.rows.forEach((row) => {
+          const configured = String(getValue(row, ['guestos', 'configuredos']) || '').toLowerCase();
+          const tools = String(getValue(row, ['toolsos', 'guestfullname', 'toolsosreported']) || '').toLowerCase();
+          if (!configured || !tools) return;
+          if (configured !== tools) count += 1;
+        });
+        return count;
+      }
+
+      countConnectionIssues(ctx) {
+        const { vinfo } = ctx;
+        return vinfo.rows.filter((row) => String(getValue(row, ['connectionstate']) || 'connected').toLowerCase() !== 'connected').length;
+      }
+
+      countConsolidationNeeded(ctx) {
+        const { vinfo } = ctx;
+        return vinfo.rows.filter((row) => ['true', 'yes', '1'].includes(String(getValue(row, ['consolidationneeded', 'needsconsolidation']) || '').toLowerCase())).length;
+      }
+
+      countLowDatastores(ctx) {
+        const { vdatastore } = ctx;
+        let count = 0;
+        vdatastore.rows.forEach((row) => {
+          const capacityMb = toNumber(getValue(row, ['capacitymb', 'capacity']));
+          const freeMb = toNumber(getValue(row, ['freemb', 'free']));
+          if (capacityMb !== null && freeMb !== null && capacityMb > 0) {
+            const pct = (freeMb / capacityMb) * 100;
+            if (pct < DATASTORE_FREE_WARN) count += 1;
+          }
+        });
+        return count;
+      }
+
+      computeVmDensity(ctx) {
+        const { vinfo, vhost } = ctx;
+        const hostCounts = new Map();
+        vinfo.rows.forEach((row) => {
+          const host = getValue(row, ['host']) || '—';
+          hostCounts.set(host, (hostCounts.get(host) || 0) + 1);
+        });
+        let max = 0;
+        hostCounts.forEach((count) => {
+          if (count > max) max = count;
+        });
+        const avg = vhost.rows.length ? vinfo.rows.length / vhost.rows.length : 0;
+        return { max, avg };
+      }
+
+      countDistinct(rows, keyNames) {
+        const set = new Set();
+        rows.forEach((row) => {
+          const value = getValue(row, keyNames);
+          if (value !== null && value !== undefined && String(value).trim()) {
+            set.add(String(value).trim());
+          }
+        });
+        return set.size;
+      }
+
+      countByCondition(rows, keyNames, predicate) {
+        return rows.reduce((count, row) => {
+          const value = getValue(row, keyNames);
+          return predicate(value) ? count + 1 : count;
+        }, 0);
+      }
+    }
+  </script>
+</body>
+</html>
