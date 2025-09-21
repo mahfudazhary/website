@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RVTools Operational Assessment</title>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     :root {
       color-scheme: light dark;
@@ -253,12 +252,52 @@
       return result;
     }
 
+    const XLSX_SOURCES = [
+      'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
+    ];
+    let xlsxLoaderPromise = null;
+
+    async function ensureXLSXLoaded() {
+      if (typeof window !== 'undefined' && window.XLSX) {
+        return window.XLSX;
+      }
+      if (!xlsxLoaderPromise) {
+        xlsxLoaderPromise = new Promise((resolve, reject) => {
+          let attempt = 0;
+          const tryLoad = () => {
+            if (attempt >= XLSX_SOURCES.length) {
+              reject(new Error('Failed to load XLSX parsing library.'));
+              return;
+            }
+            const script = document.createElement('script');
+            script.src = XLSX_SOURCES[attempt++];
+            script.async = true;
+            script.onload = () => {
+              if (window.XLSX) {
+                resolve(window.XLSX);
+              } else {
+                tryLoad();
+              }
+            };
+            script.onerror = () => {
+              tryLoad();
+            };
+            document.head.appendChild(script);
+          };
+          tryLoad();
+        });
+      }
+      return xlsxLoaderPromise;
+    }
+
     async function parseFile(file) {
       const arrayBuffer = await file.arrayBuffer();
       const extension = file.name.split('.').pop().toLowerCase();
       if (['xlsx', 'xlsm', 'xlsb', 'xls'].includes(extension)) {
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-        return workbookToSheetMap(workbook);
+        const XLSXLib = await ensureXLSXLoaded();
+        const workbook = XLSXLib.read(arrayBuffer, { type: 'array' });
+        return workbookToSheetMap(XLSXLib, workbook);
       }
       if (extension === 'csv') {
         const text = new TextDecoder().decode(arrayBuffer);
@@ -275,11 +314,11 @@
       throw new Error('Unsupported file type: ' + extension);
     }
 
-    function workbookToSheetMap(workbook) {
+    function workbookToSheetMap(XLSXLib, workbook) {
       const sheetMap = {};
       workbook.SheetNames.forEach((sheetName) => {
         const sheet = workbook.Sheets[sheetName];
-        const rows = XLSX.utils.sheet_to_json(sheet, { defval: null });
+        const rows = XLSXLib.utils.sheet_to_json(sheet, { defval: null });
         const normalizedRows = rows.map(normalizeRowKeys);
         const key = normalizeKey(sheetName);
         sheetMap[key] = {
