@@ -474,17 +474,42 @@
       return map;
     }
 
-    function getSheet(sheetMap, sheetNames, caveats, label) {
+    function createSheetFromRows(name, rows) {
+      const normalizedRows = rows.map((row) => {
+        const normalized = {};
+        Object.entries(row).forEach(([key, value]) => {
+          const norm = normalizeKey(key);
+          if (norm) {
+            normalized[norm] = value;
+          }
+        });
+        return normalized;
+      });
+      return {
+        name,
+        rows: normalizedRows,
+        columns: collectColumns(normalizedRows),
+        synthetic: true
+      };
+    }
+
+    function getSheet(sheetMap, sheetNames, caveats, label, options = {}) {
       for (const name of sheetNames) {
         const norm = normalizeKey(name);
         if (sheetMap[norm]) {
           return sheetMap[norm];
         }
       }
+      if (options && typeof options.fallback === 'function') {
+        const fallbackSheet = options.fallback();
+        if (fallbackSheet && fallbackSheet.rows && fallbackSheet.rows.length) {
+          return fallbackSheet;
+        }
+      }
       if (caveats && label) {
         caveats.add(`Missing sheet: ${label}`);
       }
-      return { name: label || sheetNames[0], rows: [], columns: new Set() };
+      return { name: label || sheetNames[0], rows: [], columns: new Set(), synthetic: true };
     }
 
     function sheetHasColumn(sheet, names) {
@@ -516,6 +541,90 @@
         this.eosData = eosData || { vcenter: [], esxi: [] };
         this.now = new Date();
         this.caveats = new Set();
+      }
+
+      deriveVcenterSheet(sheetMap) {
+        const records = new Map();
+        Object.values(sheetMap).forEach((sheet) => {
+          if (!sheet || !sheet.rows) return;
+          sheet.rows.forEach((row) => {
+            let server = getValue(row, ['vcenter', 'visdkserver', 'visdkhostname']);
+            const uuid = getValue(row, ['visdkuuid']);
+            if (!server) {
+              const hasIdentityField = ['visdkuuid', 'visdkapiversion', 'visdkapibuild', 'visdkapitype', 'visdkserver']
+                .map((field) => normalizeKey(field))
+                .some((field) => Object.prototype.hasOwnProperty.call(row, field));
+              if (hasIdentityField) {
+                const nameCandidate = getValue(row, ['name']);
+                if (nameCandidate) {
+                  server = nameCandidate;
+                }
+              }
+            }
+            if (!server && !uuid) return;
+            const version = getValue(row, [
+              'version',
+              'productversion',
+              'apiversion',
+              'visdkapiversion',
+              'apibuild',
+              'visdkapibuild'
+            ]);
+            const type = getValue(row, ['apitype', 'visdkapitype']);
+            const keyParts = [];
+            if (server) keyParts.push(String(server).toLowerCase());
+            if (uuid) keyParts.push(String(uuid).toLowerCase());
+            const key = keyParts.join('|') || `derived-${records.size}`;
+            if (!records.has(key)) {
+              records.set(key, {
+                vcenter: server || uuid || 'Unknown',
+                version: version || null,
+                uuid: uuid || null,
+                apitype: type || null
+              });
+            } else {
+              const record = records.get(key);
+              if (!record.vcenter && server) record.vcenter = server;
+              if (!record.version && version) record.version = version;
+              if (!record.uuid && uuid) record.uuid = uuid;
+              if (!record.apitype && type) record.apitype = type;
+            }
+          });
+        });
+        if (!records.size) return null;
+        const rows = Array.from(records.values()).map((item) => ({
+          vCenter: item.vcenter || 'Unknown',
+          Version: item.version || 'Unknown',
+          UUID: item.uuid || 'Unknown',
+          APIType: item.apitype || 'Unknown'
+        }));
+        return createSheetFromRows('Derived vCenter', rows);
+      }
+
+      deriveDatacenterSheet(sheetMap) {
+        const datacenters = new Set();
+        Object.values(sheetMap).forEach((sheet) => {
+          if (!sheet || !sheet.rows) return;
+          sheet.rows.forEach((row) => {
+            const dc = getValue(row, ['datacenter', 'dcname']);
+            if (!dc) return;
+            const trimmed = String(dc).trim();
+            if (trimmed) {
+              datacenters.add(trimmed);
+            }
+          });
+        });
+        if (!datacenters.size) return null;
+        const rows = Array.from(datacenters).map((dc) => ({ Datacenter: dc }));
+        return createSheetFromRows('Derived vDatacenter', rows);
+      }
+
+      derivePathSheet(sheetMap) {
+        const multiPath = sheetMap[normalizeKey('vMultiPath')];
+        if (multiPath && multiPath.rows && multiPath.rows.length) {
+          return multiPath;
+        }
+        return null;
       }
 
       analyze(fileLabel, sheetMap) {
@@ -568,8 +677,12 @@
       }
 
       prepareContext(sheetMap) {
-        const vcenter = getSheet(sheetMap, ['vCenter'], this.caveats, 'vCenter');
-        const vdatacenter = getSheet(sheetMap, ['vDatacenter'], this.caveats, 'vDatacenter');
+        const vcenter = getSheet(sheetMap, ['vCenter', 'vSource'], this.caveats, 'vCenter', {
+          fallback: () => this.deriveVcenterSheet(sheetMap)
+        });
+        const vdatacenter = getSheet(sheetMap, ['vDatacenter'], this.caveats, 'vDatacenter', {
+          fallback: () => this.deriveDatacenterSheet(sheetMap)
+        });
         const vcluster = getSheet(sheetMap, ['vCluster'], this.caveats, 'vCluster');
         const vhost = getSheet(sheetMap, ['vHost'], this.caveats, 'vHost');
         const vinfo = getSheet(sheetMap, ['vInfo'], this.caveats, 'vInfo');
@@ -580,7 +693,9 @@
         const vnic = getSheet(sheetMap, ['vNic'], this.caveats, 'vNic');
         const vportgroup = getSheet(sheetMap, ['vPortGroup', 'vNetwork', 'vPort'], this.caveats, 'vPortGroup');
         const vswitch = getSheet(sheetMap, ['vSwitch'], this.caveats, 'vSwitch');
-        const vpath = getSheet(sheetMap, ['vPath'], this.caveats, 'vPath');
+        const vpath = getSheet(sheetMap, ['vPath', 'vMultiPath'], this.caveats, 'vPath', {
+          fallback: () => this.derivePathSheet(sheetMap)
+        });
         const vdatastore = getSheet(sheetMap, ['vDatastore'], this.caveats, 'vDatastore');
 
         return {
@@ -1176,12 +1291,84 @@
         const { vinfo } = ctx;
         let protectedCount = 0;
         let unprotectedCount = 0;
+        let placeholderCount = 0;
         let unknown = true;
+        const columns = vinfo.columns ? Array.from(vinfo.columns) : [];
+        const preferred = [
+          'srmprotected',
+          'isprotected',
+          'protected',
+          'rmplaceholder',
+          'srmplaceholder',
+          'placeholder',
+          'protectiongroup',
+          'recoveryplan',
+          'replicationgroup'
+        ];
+        const dynamic = columns.filter((col) => /(srm|placeholder|recovery|protection)/.test(col));
+        const candidates = Array.from(new Set([...preferred, ...dynamic]));
+        const interpret = (value, column) => {
+          if (value === null || value === undefined) return null;
+          const text = String(value).trim();
+          if (!text) return null;
+          const lower = text.toLowerCase();
+          if (column.includes('placeholder')) {
+            if (toBoolean(value) || ['yes', 'true', 'placeholder'].includes(lower)) {
+              return 'placeholder';
+            }
+            return null;
+          }
+          if (column.includes('protectiongroup') || column.includes('recoveryplan') || column.includes('replicationgroup')) {
+            if (['none', 'n/a', 'na', 'not configured', 'unknown'].includes(lower)) {
+              return null;
+            }
+            return true;
+          }
+          if (lower.includes('not protected') || lower.includes('unprotected')) {
+            return false;
+          }
+          if (['no', 'false', 'disabled'].includes(lower)) {
+            return false;
+          }
+          if (['yes', 'true', 'enabled', 'protected', 'active', 'configured'].includes(lower)) {
+            return true;
+          }
+          if (toBoolean(value)) {
+            return true;
+          }
+          if (lower === 'unknown' || lower === 'n/a' || lower === 'none') {
+            return null;
+          }
+          return null;
+        };
         vinfo.rows.forEach((row) => {
-          const protectedRaw = getValue(row, ['srmprotected', 'isprotected']);
-          if (protectedRaw === null || protectedRaw === undefined) return;
-          unknown = false;
-          if (toBoolean(protectedRaw)) protectedCount += 1; else unprotectedCount += 1;
+          let status = null;
+          let placeholder = false;
+          for (const column of candidates) {
+            const raw = getValue(row, [column]);
+            if (raw === null || raw === undefined || raw === '') continue;
+            const interpretation = interpret(raw, column);
+            if (interpretation === 'placeholder') {
+              placeholder = true;
+              status = 'protected';
+              break;
+            }
+            if (interpretation === true) {
+              status = 'protected';
+              break;
+            }
+            if (interpretation === false && status !== 'protected') {
+              status = 'unprotected';
+            }
+          }
+          if (status === 'protected') {
+            protectedCount += 1;
+            if (placeholder) placeholderCount += 1;
+            unknown = false;
+          } else if (status === 'unprotected') {
+            unprotectedCount += 1;
+            unknown = false;
+          }
         });
         const rows = [];
         if (unknown) {
@@ -1197,6 +1384,9 @@
           recommendations.push('* Expand SRM coverage to Tier-1 workloads → improves recovery posture → reduces business impact during DR.');
         } else {
           recommendations.push('* Periodically test SRM runbooks → validates failover readiness → keeps stakeholders confident.');
+        }
+        if (placeholderCount) {
+          recommendations.push(`* Reconcile ${formatInteger(placeholderCount)} SRM placeholder VM(s) with protection groups → keeps recovery plans accurate → avoids failover surprises.`);
         }
         return `**Table 18: SRM Protection**\n${table}\nRecommendation 18:\n${recommendations.join('\n')}`;
       }
@@ -1316,11 +1506,71 @@
         let protectedCount = 0;
         let unprotectedCount = 0;
         let unknown = true;
+        const columns = vinfo.columns ? Array.from(vinfo.columns) : [];
+        const preferred = [
+          'backupstatus',
+          'isprotected',
+          'protected',
+          'backup',
+          'backupprotected',
+          'protectionstatus',
+          'dataprotectionstatus',
+          'isbackupenabled',
+          'protectiongroup',
+          'backupjob',
+          'backuppolicy'
+        ];
+        const dynamic = columns.filter((col) => /(backup|protect)/.test(col));
+        const candidates = Array.from(new Set([...preferred, ...dynamic]));
+        const interpret = (value, column) => {
+          if (value === null || value === undefined) return null;
+          const text = String(value).trim();
+          if (!text) return null;
+          const lower = text.toLowerCase();
+          if (lower.includes('not protected') || lower.includes('unprotected')) {
+            return false;
+          }
+          if (['no', 'false', 'disabled', 'failed', 'none'].includes(lower)) {
+            return false;
+          }
+          if (['yes', 'true', 'enabled', 'protected', 'active', 'ok', 'success', 'configured'].includes(lower)) {
+            return true;
+          }
+          if (column.includes('group') || column.includes('policy') || column.includes('job') || column.includes('profile')) {
+            if (['none', 'n/a', 'na', 'not configured', 'unknown'].includes(lower)) {
+              return null;
+            }
+            return true;
+          }
+          if (toBoolean(value)) {
+            return true;
+          }
+          if (lower === 'unknown' || lower === 'n/a' || lower === 'na') {
+            return null;
+          }
+          return null;
+        };
         vinfo.rows.forEach((row) => {
-          const protectedRaw = getValue(row, ['backupstatus', 'isprotected', 'backup', 'protected']);
-          if (protectedRaw === null || protectedRaw === undefined || protectedRaw === '') return;
-          unknown = false;
-          if (toBoolean(protectedRaw)) protectedCount += 1; else unprotectedCount += 1;
+          let status = null;
+          for (const column of candidates) {
+            const raw = getValue(row, [column]);
+            if (raw === null || raw === undefined || raw === '') continue;
+            const interpretation = interpret(raw, column);
+            if (interpretation === true) {
+              status = 'protected';
+              break;
+            }
+            if (interpretation === false && status !== 'protected') {
+              status = 'unprotected';
+            }
+          }
+          if (status === 'protected') {
+            protectedCount += 1;
+            unknown = false;
+          } else if (status === 'unprotected') {
+            unprotectedCount += 1;
+            unknown = false;
+          }
         });
         let rows = [];
         if (unknown) {
@@ -1343,23 +1593,48 @@
       }
 
       buildEvcTable(ctx) {
-        const { vcluster, vinfo } = ctx;
+        const { vcluster, vinfo, vhost } = ctx;
         const counts = new Map();
+        let found = false;
+        const addCount = (prefix, value) => {
+          const label = `${prefix}: ${value || 'None'}`;
+          counts.set(label, (counts.get(label) || 0) + 1);
+        };
         if (sheetHasColumn(vcluster, ['evcmode'])) {
+          found = true;
           vcluster.rows.forEach((row) => {
-            const mode = getValue(row, ['evcmode']) || 'None';
-            counts.set(mode, (counts.get(mode) || 0) + 1);
+            const mode = getValue(row, ['evcmode']);
+            addCount('Cluster', mode || 'None');
           });
-        } else if (sheetHasColumn(vinfo, ['evcmode'])) {
+        }
+        if (sheetHasColumn(vinfo, ['evcmode', 'minrequiredevcmodekey'])) {
+          found = true;
           vinfo.rows.forEach((row) => {
-            const mode = getValue(row, ['evcmode']) || 'None';
-            counts.set(mode, (counts.get(mode) || 0) + 1);
+            const mode = getValue(row, ['evcmode', 'minrequiredevcmodekey']);
+            addCount('VM Min', mode || 'None');
           });
-        } else {
+        }
+        if (sheetHasColumn(vhost, ['currentevc'])) {
+          found = true;
+          vhost.rows.forEach((row) => {
+            const mode = getValue(row, ['currentevc']);
+            if (mode) addCount('Host Current', mode);
+          });
+        }
+        if (sheetHasColumn(vhost, ['maxevc'])) {
+          found = true;
+          vhost.rows.forEach((row) => {
+            const mode = getValue(row, ['maxevc']);
+            if (mode) addCount('Host Max', mode);
+          });
+        }
+        if (!found) {
           this.caveats.add('EVC mode column missing.');
         }
         const rows = counts.size
-          ? Array.from(counts.entries()).map(([mode, count]) => [mode, formatInteger(count)])
+          ? Array.from(counts.entries())
+              .sort((a, b) => a[0].localeCompare(b[0]))
+              .map(([mode, count]) => [mode, formatInteger(count)])
           : [['—', '—']];
         const table = markdownTable(['EVC Mode', '#Occurrences'], rows);
         const recommendations = [];
@@ -1630,7 +1905,8 @@
         const { vpath } = ctx;
         const counts = new Map();
         vpath.rows.forEach((row) => {
-          const policy = getValue(row, ['policy']) || 'Unknown';
+          const policy =
+            getValue(row, ['policy', 'multipathpolicy', 'pathpolicy', 'pathselectionpolicy']) || 'Unknown';
           counts.set(policy, (counts.get(policy) || 0) + 1);
         });
         const rows = Array.from(counts.entries()).map(([policy, count]) => [policy, formatInteger(count)]);
