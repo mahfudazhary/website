@@ -3,127 +3,185 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>2024 IT Industry Trend Dashboard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>IT Industry Outlook 2024 · Trend Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" integrity="sha256-86j6k1z9m2DS5JVD2lrplvyOJEH4SO3WYp2WMXQCY6E=" crossorigin="anonymous"></script>
     <style>
         :root {
-            --bg: #0f172a;
-            --card-bg: rgba(15, 23, 42, 0.75);
-            --accent: #38bdf8;
-            --accent-strong: #f97316;
-            --text: #f8fafc;
-            --muted: #94a3b8;
-            --positive: #4ade80;
-            --negative: #f87171;
+            color-scheme: light;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: rgba(148, 163, 184, 0.35);
+            --primary: #2563eb;
+            --accent: #0ea5e9;
+            --text: #0f172a;
+            --muted: #475569;
+            --positive: #059669;
+            --negative: #dc2626;
+            font-size: 16px;
         }
 
-        * {
+        *, *::before, *::after {
             box-sizing: border-box;
         }
 
         body {
             margin: 0;
-            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.15), transparent 40%),
-                        radial-gradient(circle at bottom right, rgba(249, 115, 22, 0.12), transparent 45%),
-                        var(--bg);
+            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             color: var(--text);
-            line-height: 1.6;
+            background: radial-gradient(circle at 12% 18%, rgba(14, 165, 233, 0.12), transparent 55%),
+                        radial-gradient(circle at 85% 8%, rgba(37, 99, 235, 0.12), transparent 60%),
+                        linear-gradient(180deg, rgba(14, 116, 144, 0.04), transparent 30%),
+                        var(--bg);
         }
 
-        header.hero {
-            padding: 80px 24px 40px;
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(15, 23, 42, 0.3));
-            border-bottom: 1px solid rgba(148, 163, 184, 0.25);
-        }
-
-        .container {
-            max-width: 1180px;
+        .page {
+            max-width: 1120px;
             margin: 0 auto;
-            padding: 0 24px;
+            padding: 0 clamp(1.5rem, 4vw, 3.5rem);
         }
 
-        .hero-content {
-            max-width: 760px;
+        header {
+            padding: clamp(2.5rem, 7vw, 4.5rem) 0 clamp(3rem, 8vw, 5rem);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: clamp(2.5rem, 6vw, 4rem);
+        }
+
+        .brand {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: var(--primary);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .tagline {
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .hero {
+            display: grid;
+            gap: 1.75rem;
+            max-width: 720px;
         }
 
         .hero h1 {
-            font-size: clamp(2.5rem, 4vw, 3.5rem);
-            margin-bottom: 16px;
-            line-height: 1.1;
+            font-size: clamp(2.45rem, 6vw, 3.65rem);
+            letter-spacing: -0.02em;
+            margin: 0;
         }
 
         .hero p {
-            margin: 0 0 24px;
+            font-size: clamp(1rem, 2.4vw, 1.125rem);
             color: var(--muted);
-            font-size: 1.05rem;
+            margin: 0;
+        }
+
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
         }
 
         .badge {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            background: rgba(56, 189, 248, 0.15);
-            border: 1px solid rgba(56, 189, 248, 0.35);
-            padding: 8px 14px;
+            gap: 0.5rem;
+            padding: 0.45rem 0.95rem;
             border-radius: 999px;
             font-weight: 600;
-            color: var(--accent);
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+        }
+
+        .cta {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 999px;
+            padding: 0.7rem 1.4rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 150ms ease, box-shadow 150ms ease;
+            box-shadow: 0 12px 25px rgba(37, 99, 235, 0.2);
+        }
+
+        .cta:focus-visible {
+            outline: 3px solid rgba(37, 99, 235, 0.4);
+            outline-offset: 2px;
+        }
+
+        .cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 16px 32px rgba(37, 99, 235, 0.25);
         }
 
         main {
-            padding: 48px 0 72px;
-        }
-
-        .kpi-grid {
             display: grid;
-            gap: 24px;
-            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-            margin-bottom: 48px;
+            gap: clamp(3rem, 8vw, 4.75rem);
+            padding-bottom: clamp(3rem, 10vw, 6rem);
         }
 
-        .kpi-card {
-            background: var(--card-bg);
-            border: 1px solid rgba(148, 163, 184, 0.15);
-            padding: 24px;
-            border-radius: 18px;
-            position: relative;
-            overflow: hidden;
+        section {
+            display: grid;
+            gap: 1.75rem;
         }
 
-        .kpi-card::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.15), transparent 55%);
-            opacity: 0.6;
-            pointer-events: none;
+        section header h2 {
+            margin: 0;
+            font-size: clamp(1.5rem, 3vw, 2rem);
         }
 
-        .kpi-card h3 {
-            font-size: 0.95rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
+        section header p {
+            margin: 0;
             color: var(--muted);
-            margin-bottom: 18px;
+            max-width: 640px;
         }
 
-        .kpi-value {
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: clamp(1rem, 3vw, 1.5rem);
+        }
+
+        .metric-card {
+            background: var(--surface);
+            border-radius: 18px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 15px 30px rgba(15, 23, 42, 0.08);
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .metric-value {
             font-size: 2rem;
             font-weight: 700;
-            margin-bottom: 10px;
         }
 
-        .kpi-meta {
+        .metric-detail {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.95rem;
             color: var(--muted);
+            font-size: 0.95rem;
         }
 
         .trend-up {
@@ -136,413 +194,444 @@
             font-weight: 600;
         }
 
-        .grid-2 {
+        .chart-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 32px;
-            margin-bottom: 48px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: clamp(1.5rem, 4vw, 2rem);
         }
 
         .chart-card {
-            background: var(--card-bg);
-            border: 1px solid rgba(148, 163, 184, 0.15);
-            border-radius: 20px;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
+            background: var(--surface);
+            border-radius: 22px;
+            padding: 1.75rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.07);
+            display: grid;
+            gap: 1.1rem;
         }
 
         .chart-card header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 18px;
-            gap: 12px;
-        }
-
-        .chart-card h2 {
-            font-size: 1.1rem;
-            margin: 0;
+            gap: 1rem;
         }
 
         .chip {
-            font-size: 0.85rem;
-            padding: 4px 12px;
+            padding: 0.35rem 0.85rem;
             border-radius: 999px;
-            border: 1px solid rgba(148, 163, 184, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.35);
             color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        canvas {
+            width: 100% !important;
+            min-height: 240px;
         }
 
         .insights {
+            background: var(--surface);
+            border-radius: 22px;
+            padding: clamp(1.5rem, 3vw, 2rem);
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.07);
+        }
+
+        .insights-list {
             display: grid;
-            gap: 24px;
-            margin-bottom: 48px;
+            gap: 1.25rem;
+            padding: 0;
+            margin: 0;
+            list-style: none;
         }
 
-        .insight-card {
-            background: linear-gradient(145deg, rgba(59, 130, 246, 0.12), rgba(79, 70, 229, 0.12));
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            padding: 24px;
-            border-radius: 18px;
+        .insights-list li {
+            display: grid;
+            gap: 0.5rem;
         }
 
-        .insight-card h3 {
-            margin-top: 0;
-            margin-bottom: 12px;
-            font-size: 1.1rem;
+        .insights-list h3 {
+            margin: 0;
+            font-size: 1.05rem;
         }
 
-        .insight-card ul {
-            padding-left: 18px;
+        .insights-list p {
             margin: 0;
             color: var(--muted);
+            line-height: 1.55;
         }
 
-        .table-section {
-            background: var(--card-bg);
-            border-radius: 20px;
-            border: 1px solid rgba(148, 163, 184, 0.15);
-            padding: 24px;
+        .table-wrapper {
             overflow-x: auto;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.06);
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.95rem;
-        }
-
-        table thead {
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-size: 0.8rem;
+            min-width: 640px;
         }
 
         th, td {
-            padding: 14px 12px;
-            border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+            padding: 1rem 1.1rem;
             text-align: left;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.85);
         }
 
-        tr:last-child td {
+        thead th {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        tbody tr:last-child td {
             border-bottom: none;
         }
 
-        .tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 10px;
-            border-radius: 999px;
-            font-size: 0.8rem;
-            color: var(--accent);
-            background: rgba(56, 189, 248, 0.12);
+        footer {
+            padding: 3rem 0 3.5rem;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.95rem;
         }
 
-        footer {
-            padding: 48px 24px;
-            color: var(--muted);
-            text-align: center;
+        footer a {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
         }
 
         @media (max-width: 720px) {
-            header.hero {
-                padding: 64px 20px 32px;
+            nav {
+                flex-direction: column;
+                align-items: flex-start;
             }
 
-            .hero h1 {
-                font-size: clamp(2.2rem, 6vw, 2.9rem);
+            .metric-detail {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.35rem;
+            }
+
+            canvas {
+                min-height: 220px;
             }
         }
     </style>
 </head>
 <body>
-    <header class="hero">
-        <div class="container hero-content">
-            <span class="badge">Latest update · Q2 2024</span>
-            <h1>Global IT Industry Trend Dashboard</h1>
-            <p>
-                A synthesized view of technology market momentum with investment, adoption, and talent metrics that
-                signal where enterprise strategies are accelerating through 2024. Data blends analyst outlooks with
-                enterprise survey trends for a directional pulse on the industry.
-            </p>
-        </div>
-    </header>
+    <div class="page">
+        <header>
+            <nav aria-label="Global">
+                <div>
+                    <div class="brand">Pulse Signals</div>
+                    <div class="tagline">Quarterly briefing on global IT momentum</div>
+                </div>
+                <span class="badge" aria-label="Last refreshed in Q2 2024">Q2 2024 refresh</span>
+            </nav>
 
-    <main>
-        <section class="container kpi-grid" aria-label="Key metrics">
-            <article class="kpi-card">
-                <h3>Global IT Spending</h3>
-                <div class="kpi-value">$4.8T</div>
-                <div class="kpi-meta">
-                    <span>Forecast 2024</span>
-                    <span class="trend-up">▲ 5.3% YoY</span>
+            <div class="hero">
+                <h1>2024 IT Industry Trend Dashboard</h1>
+                <p>
+                    Explore how technology investments, AI adoption, and cybersecurity priorities are shifting this year.
+                    Curated for executive briefings and strategy decks, the dashboard blends analyst outlooks with enterprise signals.
+                </p>
+                <div class="hero-actions">
+                    <button class="cta" type="button" onclick="document.getElementById('kpi-section').scrollIntoView({ behavior: 'smooth' });">
+                        View the metrics
+                    </button>
+                    <span class="tagline">Updated with analyst insights and global survey data</span>
                 </div>
-            </article>
-            <article class="kpi-card">
-                <h3>Cloud Workload Penetration</h3>
-                <div class="kpi-value">58%</div>
-                <div class="kpi-meta">
-                    <span>Enterprise Average</span>
-                    <span class="trend-up">▲ +11 pts</span>
-                </div>
-            </article>
-            <article class="kpi-card">
-                <h3>AI-Related Job Postings</h3>
-                <div class="kpi-value">+78%</div>
-                <div class="kpi-meta">
-                    <span>vs. 2023</span>
-                    <span class="trend-up">High Demand</span>
-                </div>
-            </article>
-            <article class="kpi-card">
-                <h3>Cybersecurity Spend</h3>
-                <div class="kpi-value">$221B</div>
-                <div class="kpi-meta">
-                    <span>Global 2024</span>
-                    <span class="trend-up">▲ 8.2% YoY</span>
-                </div>
-            </article>
-            <article class="kpi-card">
-                <h3>Remote-Capable Workforce</h3>
-                <div class="kpi-value">64%</div>
-                <div class="kpi-meta">
-                    <span>Hybrid or Fully Remote</span>
-                    <span class="trend-up">▲ 9 pts</span>
-                </div>
-            </article>
-            <article class="kpi-card">
-                <h3>Edge Deployments</h3>
-                <div class="kpi-value">41%</div>
-                <div class="kpi-meta">
-                    <span>Manufacturing &amp; Retail</span>
-                    <span class="trend-up">▲ 14 pts</span>
-                </div>
-            </article>
-        </section>
+            </div>
+        </header>
 
-        <section class="container grid-2" aria-label="Visual analytics">
-            <article class="chart-card">
+        <main>
+            <section id="kpi-section" aria-labelledby="kpi-heading">
                 <header>
-                    <h2>Global IT Spending Outlook</h2>
-                    <span class="chip">USD Trillion</span>
+                    <h2 id="kpi-heading">Headline metrics</h2>
+                    <p>Key indicators showing where spending is accelerating and which initiatives lead the 2024 IT strategy agenda.</p>
                 </header>
-                <canvas id="spendingChart" height="280" role="img" aria-label="Line chart of global IT spending from 2019 to 2024"></canvas>
-            </article>
-            <article class="chart-card">
-                <header>
-                    <h2>Cloud Investment Mix 2024</h2>
-                    <span class="chip">USD Billion</span>
-                </header>
-                <canvas id="cloudChart" height="280" role="img" aria-label="Bar chart of 2024 cloud investment mix"></canvas>
-            </article>
-            <article class="chart-card">
-                <header>
-                    <h2>AI Adoption by Company Size</h2>
-                    <span class="chip">Share of organizations</span>
-                </header>
-                <canvas id="aiChart" height="280" role="img" aria-label="Clustered bar chart comparing AI adoption in 2020 vs 2024"></canvas>
-            </article>
-            <article class="chart-card">
-                <header>
-                    <h2>Cybersecurity Incidents vs Spend</h2>
-                    <span class="chip">Indexed view</span>
-                </header>
-                <canvas id="cyberChart" height="280" role="img" aria-label="Dual-axis chart comparing cybersecurity incidents and spending"></canvas>
-            </article>
-        </section>
+                <div class="metric-grid">
+                    <article class="metric-card" aria-label="Global IT spending forecast">
+                        <div class="metric-label">Global IT spending</div>
+                        <div class="metric-value">$4.8T</div>
+                        <div class="metric-detail">
+                            <span>2024 forecast</span>
+                            <span class="trend-up">▲ 5.3% YoY</span>
+                        </div>
+                    </article>
+                    <article class="metric-card" aria-label="Share of workloads in the cloud">
+                        <div class="metric-label">Cloud penetration</div>
+                        <div class="metric-value">58%</div>
+                        <div class="metric-detail">
+                            <span>Enterprise workloads</span>
+                            <span class="trend-up">▲ 11 pts YoY</span>
+                        </div>
+                    </article>
+                    <article class="metric-card" aria-label="AI hiring intensity">
+                        <div class="metric-label">AI hiring velocity</div>
+                        <div class="metric-value">+78%</div>
+                        <div class="metric-detail">
+                            <span>Job postings vs. 2023</span>
+                            <span class="trend-up">High demand</span>
+                        </div>
+                    </article>
+                    <article class="metric-card" aria-label="Cybersecurity investment">
+                        <div class="metric-label">Cybersecurity spend</div>
+                        <div class="metric-value">$221B</div>
+                        <div class="metric-detail">
+                            <span>Global 2024</span>
+                            <span class="trend-up">▲ 8.2% YoY</span>
+                        </div>
+                    </article>
+                    <article class="metric-card" aria-label="Automation budget share">
+                        <div class="metric-label">Automation budgets</div>
+                        <div class="metric-value">32%</div>
+                        <div class="metric-detail">
+                            <span>Of digital spend</span>
+                            <span class="trend-up">▲ 6 pts YoY</span>
+                        </div>
+                    </article>
+                    <article class="metric-card" aria-label="Edge deployment progress">
+                        <div class="metric-label">Edge rollouts</div>
+                        <div class="metric-value">41%</div>
+                        <div class="metric-detail">
+                            <span>Retail &amp; manufacturing</span>
+                            <span class="trend-up">▲ 14 pts YoY</span>
+                        </div>
+                    </article>
+                </div>
+            </section>
 
-        <section class="container insights" aria-label="Key insights">
-            <article class="insight-card">
-                <h3>Strategic Signals</h3>
-                <ul>
-                    <li>Infrastructure modernization remains a priority: 67% of CIOs plan to accelerate cloud migrations for core workloads by year-end.</li>
-                    <li>Generative AI pilots are moving into production with 44% of enterprises budgeting over $1M for AI platforms and orchestration in 2024.</li>
-                    <li>Security by design is reshaping software roadmaps as zero-trust adoption climbs to 62% across regulated industries.</li>
-                </ul>
-            </article>
-            <article class="insight-card">
-                <h3>Talent &amp; Delivery</h3>
-                <ul>
-                    <li>Multi-cloud, cybersecurity, and data engineering roles show the fastest salary growth, averaging +12% across North America and Europe.</li>
-                    <li>46% of organizations cite skills gaps as the top barrier to scaling digital transformation, ahead of budget constraints.</li>
-                    <li>High-performing teams blend product management, DevSecOps, and AI/ML capabilities to reduce time-to-market by 28%.</li>
-                </ul>
-            </article>
-        </section>
+            <section aria-labelledby="visual-heading">
+                <header>
+                    <h2 id="visual-heading">Signals at a glance</h2>
+                    <p>Visualize how cloud spend allocation, AI adoption, security maturity, and macro technology budgets are evolving.</p>
+                </header>
+                <div class="chart-grid">
+                    <article class="chart-card">
+                        <header>
+                            <h3>Global IT spending outlook</h3>
+                            <span class="chip">USD trillion</span>
+                        </header>
+                        <canvas id="spendingChart" role="img" aria-label="Line chart of IT spending 2020-2025"></canvas>
+                    </article>
+                    <article class="chart-card">
+                        <header>
+                            <h3>Cloud investment mix</h3>
+                            <span class="chip">2024 allocation</span>
+                        </header>
+                        <canvas id="cloudChart" role="img" aria-label="Bar chart of cloud service investment mix"></canvas>
+                    </article>
+                    <article class="chart-card">
+                        <header>
+                            <h3>AI adoption by company size</h3>
+                            <span class="chip">Share of organizations</span>
+                        </header>
+                        <canvas id="aiChart" role="img" aria-label="Grouped bar chart of AI adoption in 2020 vs 2024"></canvas>
+                    </article>
+                    <article class="chart-card">
+                        <header>
+                            <h3>Cybersecurity incidents vs. spend</h3>
+                            <span class="chip">Indexed view</span>
+                        </header>
+                        <canvas id="cyberChart" role="img" aria-label="Combo chart of incidents and security spend"></canvas>
+                    </article>
+                </div>
+            </section>
 
-        <section class="container table-section" aria-label="Detailed metrics">
-            <header style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                <h2 style="margin: 0; font-size: 1.1rem;">2023 → 2024 Trend Benchmarks</h2>
-                <span class="tag">Benchmark snapshot</span>
-            </header>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Trend Indicator</th>
-                        <th>2023</th>
-                        <th>2024</th>
-                        <th>YoY Change</th>
-                        <th>Strategic Note</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Cloud-native workloads</td>
-                        <td>47%</td>
-                        <td>58%</td>
-                        <td class="trend-up">▲ +11 pts</td>
-                        <td>Driving faster release velocity and platform consolidation.</td>
-                    </tr>
-                    <tr>
-                        <td>AI-enabled product roadmap</td>
-                        <td>29%</td>
-                        <td>45%</td>
-                        <td class="trend-up">▲ +16 pts</td>
-                        <td>AI copilots prioritized for customer experience and automation.</td>
-                    </tr>
-                    <tr>
-                        <td>Zero-trust security adoption</td>
-                        <td>48%</td>
-                        <td>62%</td>
-                        <td class="trend-up">▲ +14 pts</td>
-                        <td>Regulated industries accelerating compliance-aligned rollouts.</td>
-                    </tr>
-                    <tr>
-                        <td>Tech budgets tied to revenue initiatives</td>
-                        <td>37%</td>
-                        <td>49%</td>
-                        <td class="trend-up">▲ +12 pts</td>
-                        <td>Business value metrics increasingly shape portfolio decisions.</td>
-                    </tr>
-                    <tr>
-                        <td>Average release cadence (weeks)</td>
-                        <td>6.5</td>
-                        <td>5.1</td>
-                        <td class="trend-down">▼ –1.4 weeks</td>
-                        <td>DevSecOps and platform teams shrinking lead times.</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-    </main>
+            <section aria-labelledby="insight-heading">
+                <header>
+                    <h2 id="insight-heading">Leadership insights</h2>
+                    <p>Analyst commentary on where executives are directing capital, talent, and delivery focus through the next planning cycle.</p>
+                </header>
+                <div class="insights">
+                    <ul class="insights-list">
+                        <li>
+                            <h3>Cloud-first architectures accelerate velocity</h3>
+                            <p>67% of CIOs report faster release cadence as platforms modernize. Consolidated multi-cloud management trims OPEX by up to 11%.</p>
+                        </li>
+                        <li>
+                            <h3>AI platforms transition from pilots to scale</h3>
+                            <p>44% of enterprises allocate $1M+ for orchestration and guardrails, prioritizing generative AI copilots in customer and operations journeys.</p>
+                        </li>
+                        <li>
+                            <h3>Zero-trust and observability reshape security</h3>
+                            <p>Security-by-design programs now pair zero-trust adoption (62%) with unified telemetry to cut incident dwell time by 21%.</p>
+                        </li>
+                    </ul>
+                </div>
+            </section>
 
-    <footer>
-        <div class="container">
-            <p>Data reflects combined analyst forecasts (Gartner, IDC, Forrester) and enterprise sentiment surveys as of Q2 2024.</p>
-        </div>
-    </footer>
+            <section aria-labelledby="table-heading">
+                <header>
+                    <h2 id="table-heading">2023 → 2024 benchmarks</h2>
+                    <p>A comparative look at the most cited priorities in digital, security, and platform roadmaps.</p>
+                </header>
+                <div class="table-wrapper" role="region" aria-live="polite">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th scope="col">Trend indicator</th>
+                                <th scope="col">2023</th>
+                                <th scope="col">2024</th>
+                                <th scope="col">Change</th>
+                                <th scope="col">Strategic note</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Cloud-native workloads</td>
+                                <td>47%</td>
+                                <td>58%</td>
+                                <td class="trend-up">▲ +11 pts</td>
+                                <td>Platform consolidation drives faster feature delivery.</td>
+                            </tr>
+                            <tr>
+                                <td>AI-backed product roadmaps</td>
+                                <td>29%</td>
+                                <td>45%</td>
+                                <td class="trend-up">▲ +16 pts</td>
+                                <td>Customer experience and automation lead investment.</td>
+                            </tr>
+                            <tr>
+                                <td>Zero-trust security adoption</td>
+                                <td>48%</td>
+                                <td>62%</td>
+                                <td class="trend-up">▲ +14 pts</td>
+                                <td>Regulated industries accelerate compliance-driven rollouts.</td>
+                            </tr>
+                            <tr>
+                                <td>Budgets tied to revenue impact</td>
+                                <td>37%</td>
+                                <td>49%</td>
+                                <td class="trend-up">▲ +12 pts</td>
+                                <td>Business value metrics steer portfolio prioritization.</td>
+                            </tr>
+                            <tr>
+                                <td>Average release cadence</td>
+                                <td>6.5 weeks</td>
+                                <td>5.1 weeks</td>
+                                <td class="trend-up">▲ 1.4 weeks faster</td>
+                                <td>Product + platform teams shrink deployment lead times.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            Built for GitHub Pages · Deploy by pushing <code>index.html</code> to the <code>main</code> branch or a <code>docs</code> folder. Data sourced from analyst houses, industry surveys, and public filings (Q2 2024).
+        </footer>
+    </div>
 
     <script>
-        const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
-        const mutedColor = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim();
-        const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
-        const accentStrong = getComputedStyle(document.documentElement).getPropertyValue('--accent-strong').trim();
+        const textColor = '#0f172a';
+        const mutedColor = '#64748b';
+        const primaryColor = '#2563eb';
+        const accentColor = '#0ea5e9';
+        const positiveColor = '#059669';
 
-        const spendingCtx = document.getElementById('spendingChart').getContext('2d');
+        const spendingCtx = document.getElementById('spendingChart');
         new Chart(spendingCtx, {
             type: 'line',
             data: {
-                labels: ['2019', '2020', '2021', '2022', '2023', '2024'],
+                labels: ['2020', '2021', '2022', '2023', '2024', '2025'],
                 datasets: [{
-                    label: 'Global IT Spend',
-                    data: [3.8, 3.6, 4.1, 4.4, 4.6, 4.8],
-                    borderColor: accentColor,
-                    backgroundColor: 'rgba(56, 189, 248, 0.18)',
+                    label: 'Total IT spend',
+                    data: [3.9, 4.2, 4.4, 4.56, 4.8, 5.05],
+                    borderColor: primaryColor,
+                    backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                    tension: 0.35,
                     fill: true,
-                    tension: 0.4,
                     pointRadius: 4,
-                    pointHoverRadius: 6
-                }]
+                    pointHoverRadius: 6,
+                }],
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
                     y: {
-                        ticks: { color: mutedColor },
-                        grid: { color: 'rgba(148, 163, 184, 0.15)' },
+                        ticks: { color: mutedColor, callback: (value) => '$' + value.toFixed(1) + 'T' },
+                        grid: { color: 'rgba(148, 163, 184, 0.25)', drawBorder: false },
                         beginAtZero: false,
-                        suggestedMin: 3.2,
-                        suggestedMax: 5.2
                     },
                     x: {
                         ticks: { color: mutedColor },
-                        grid: { display: false }
-                    }
+                        grid: { display: false },
+                    },
                 },
                 plugins: {
-                    legend: {
-                        labels: { color: textColor }
-                    }
-                }
-            }
+                    legend: { labels: { color: textColor } },
+                },
+            },
         });
 
-        const cloudCtx = document.getElementById('cloudChart').getContext('2d');
+        const cloudCtx = document.getElementById('cloudChart');
         new Chart(cloudCtx, {
             type: 'bar',
             data: {
-                labels: ['IaaS', 'PaaS', 'SaaS', 'Security', 'Managed Services'],
+                labels: ['IaaS', 'PaaS', 'SaaS', 'Cloud security', 'FinOps'],
                 datasets: [{
-                    label: 'Investment 2024',
-                    data: [120, 85, 148, 64, 72],
-                    backgroundColor: [
-                        'rgba(56, 189, 248, 0.7)',
-                        'rgba(14, 165, 233, 0.7)',
-                        'rgba(59, 130, 246, 0.7)',
-                        'rgba(147, 197, 253, 0.7)',
-                        'rgba(2, 132, 199, 0.7)'
-                    ],
-                    borderColor: 'transparent',
+                    label: 'Spend (USD billions)',
+                    data: [310, 185, 265, 97, 42],
+                    backgroundColor: [primaryColor, primaryColor, accentColor, accentColor, '#22c55e'],
                     borderRadius: 12,
-                    maxBarThickness: 44
-                }]
+                    maxBarThickness: 46,
+                }],
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
                     y: {
-                        ticks: { color: mutedColor },
-                        grid: { color: 'rgba(148, 163, 184, 0.15)' },
-                        beginAtZero: true
+                        ticks: { color: mutedColor, callback: (value) => '$' + value },
+                        grid: { color: 'rgba(148, 163, 184, 0.2)', drawBorder: false },
+                        beginAtZero: true,
                     },
                     x: {
                         ticks: { color: mutedColor },
-                        grid: { display: false }
-                    }
+                        grid: { display: false },
+                    },
                 },
                 plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
+                    legend: { display: false },
+                },
+            },
         });
 
-        const aiCtx = document.getElementById('aiChart').getContext('2d');
+        const aiCtx = document.getElementById('aiChart');
         new Chart(aiCtx, {
             type: 'bar',
             data: {
-                labels: ['Small Business', 'Mid-Market', 'Enterprise'],
+                labels: ['Small business', 'Mid-market', 'Enterprise'],
                 datasets: [
                     {
                         label: '2020',
                         data: [18, 32, 47],
-                        backgroundColor: 'rgba(148, 163, 184, 0.4)',
+                        backgroundColor: 'rgba(148, 163, 184, 0.55)',
                         borderRadius: 12,
-                        maxBarThickness: 40
+                        maxBarThickness: 44,
                     },
                     {
                         label: '2024',
                         data: [39, 58, 74],
-                        backgroundColor: accentStrong,
+                        backgroundColor: primaryColor,
                         borderRadius: 12,
-                        maxBarThickness: 40
-                    }
-                ]
+                        maxBarThickness: 44,
+                    },
+                ],
             },
             options: {
                 responsive: true,
@@ -550,49 +639,47 @@
                 scales: {
                     y: {
                         ticks: { color: mutedColor, callback: (value) => value + '%' },
-                        grid: { color: 'rgba(148, 163, 184, 0.15)' },
+                        grid: { color: 'rgba(148, 163, 184, 0.2)', drawBorder: false },
                         beginAtZero: true,
-                        suggestedMax: 80
+                        suggestedMax: 80,
                     },
                     x: {
                         ticks: { color: mutedColor },
-                        grid: { display: false }
-                    }
+                        grid: { display: false },
+                    },
                 },
                 plugins: {
-                    legend: {
-                        labels: { color: textColor }
-                    }
-                }
-            }
+                    legend: { labels: { color: textColor } },
+                },
+            },
         });
 
-        const cyberCtx = document.getElementById('cyberChart').getContext('2d');
+        const cyberCtx = document.getElementById('cyberChart');
         new Chart(cyberCtx, {
             data: {
                 labels: ['2020', '2021', '2022', '2023', '2024'],
                 datasets: [
                     {
                         type: 'line',
-                        label: 'Major Incidents (Indexed)',
-                        data: [100, 111, 134, 147, 159],
-                        borderColor: 'rgba(248, 113, 113, 0.85)',
-                        backgroundColor: 'rgba(248, 113, 113, 0.15)',
+                        label: 'Major incidents (indexed)',
+                        data: [100, 112, 134, 147, 158],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.12)',
                         tension: 0.35,
                         fill: true,
-                        yAxisID: 'y'
+                        yAxisID: 'y',
+                        pointRadius: 4,
                     },
                     {
                         type: 'bar',
-                        label: 'Cybersecurity Spend (USD B)',
+                        label: 'Security spend (USD billions)',
                         data: [150, 170, 187, 204, 221],
-                        backgroundColor: 'rgba(74, 222, 128, 0.7)',
-                        borderColor: 'transparent',
-                        borderRadius: 10,
+                        backgroundColor: positiveColor,
+                        borderRadius: 12,
+                        maxBarThickness: 42,
                         yAxisID: 'y1',
-                        maxBarThickness: 36
-                    }
-                ]
+                    },
+                ],
             },
             options: {
                 responsive: true,
@@ -601,29 +688,27 @@
                     y: {
                         position: 'left',
                         ticks: { color: mutedColor },
-                        grid: { color: 'rgba(148, 163, 184, 0.15)' },
+                        grid: { color: 'rgba(148, 163, 184, 0.2)', drawBorder: false },
                         beginAtZero: false,
                         suggestedMin: 90,
-                        suggestedMax: 170
+                        suggestedMax: 170,
                     },
                     y1: {
                         position: 'right',
-                        ticks: { color: mutedColor },
+                        ticks: { color: mutedColor, callback: (value) => '$' + value },
                         grid: { drawOnChartArea: false },
                         beginAtZero: true,
-                        suggestedMax: 240
+                        suggestedMax: 240,
                     },
                     x: {
                         ticks: { color: mutedColor },
-                        grid: { display: false }
-                    }
+                        grid: { display: false },
+                    },
                 },
                 plugins: {
-                    legend: {
-                        labels: { color: textColor }
-                    }
-                }
-            }
+                    legend: { labels: { color: textColor } },
+                },
+            },
         });
     </script>
 </body>
