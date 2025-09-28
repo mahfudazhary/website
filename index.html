@@ -101,6 +101,16 @@
       transition: transform 0.25s ease, box-shadow 0.25s ease;
     }
 
+    .card.capture-mode {
+      background: transparent;
+      border-color: transparent;
+      box-shadow: none;
+    }
+
+    .card.capture-mode::after {
+      display: none;
+    }
+
     .card::after {
       content: '';
       position: absolute;
@@ -1518,6 +1528,12 @@
       return instance.toLocaleString();
     }
 
+    function formatTimestampForFilename(date) {
+      const instance = date instanceof Date ? date : parseDate(date) || new Date();
+      const pad = value => String(value).padStart(2, '0');
+      return `${instance.getFullYear()}${pad(instance.getMonth() + 1)}${pad(instance.getDate())}-${pad(instance.getHours())}${pad(instance.getMinutes())}${pad(instance.getSeconds())}`;
+    }
+
     function normalizeSecurityValue(value) {
       if (value === null || value === undefined) return 'deny';
       const val = String(value).trim().toLowerCase();
@@ -2357,13 +2373,14 @@
       const margin = 48;
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
+      const exportedAt = new Date();
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(24);
       doc.text('NexaOrb RVTools Dashboard Report', margin, margin + 8);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(12);
-      doc.text(`Generated on ${formatDateTime(insights.generatedAt)}`, margin, margin + 30);
+      doc.text(`Generated on ${formatDateTime(exportedAt)}`, margin, margin + 30);
 
       let cursorY = margin + 58;
       const ensureSpace = heightNeeded => {
@@ -2455,8 +2472,7 @@
         doc.addImage(capture.dataUrl, 'PNG', imgX, imgY, drawWidth, drawHeight, undefined, 'FAST');
       });
 
-      const timestamp = new Date().toISOString().slice(0, 10);
-      doc.save(`nexaorb-rvtools-dashboards-${timestamp}.pdf`);
+      doc.save(`nexaorb-rvtools-dashboards-${formatTimestampForFilename(exportedAt)}.pdf`);
     }
 
     function createMetricTile(label, value, description) {
@@ -2545,6 +2561,7 @@
       for (const card of cards) {
         const title = card.querySelector('h3')?.textContent || 'Dashboard';
         try {
+          card.classList.add('capture-mode');
           const canvas = await window.html2canvas(card, {
             backgroundColor: '#ffffff',
             scale: Math.min(window.devicePixelRatio || 1, 2)
@@ -2553,6 +2570,8 @@
         } catch (error) {
           console.error('Failed to capture dashboard', title, error);
           logEvent('Dashboard capture failed', { dashboard: title, error: error.message });
+        } finally {
+          card.classList.remove('capture-mode');
         }
       }
       return captures;
