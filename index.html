@@ -154,6 +154,7 @@
     .grid.cols-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
     .grid.cols-4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 
+
     .metric-tile {
       position: relative;
       background: var(--surface-strong);
@@ -336,16 +337,74 @@
 
     .file-list {
       margin-top: 0.75rem;
+      margin-bottom: 1rem;
       font-size: 0.85rem;
       color: var(--text-subtle);
       display: none;
     }
 
+    .file-panel .file-list {
+      margin: 0;
+      display: none;
+    }
+
     .file-list ul {
       margin: 0;
-      padding-left: 1rem;
+      padding-left: 0;
       display: grid;
       gap: 0.3rem;
+      list-style: none;
+    }
+
+    .file-list ul li {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem 0.6rem;
+      align-items: baseline;
+    }
+
+    .file-list ul li .file-name {
+      font-weight: 500;
+      color: var(--text-strong);
+    }
+
+    .file-list ul li .file-version {
+      font-size: 0.78rem;
+      color: var(--text-subtle);
+      background: rgba(0, 169, 224, 0.14);
+      border-radius: 999px;
+      padding: 0.1rem 0.55rem;
+    }
+
+    .file-panel {
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background: var(--surface);
+      padding: 1rem;
+      box-shadow: var(--shadow);
+      display: none;
+      flex-direction: column;
+      gap: 0.75rem;
+      min-height: 0;
+    }
+
+    .panel-header {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-subtle);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .panel-header::before {
+      content: '';
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      background: var(--accent-gold);
+      mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'><path d='M4 4a2 2 0 0 1 2-2h7.172a2 2 0 0 1 1.414.586l5.828 5.828A2 2 0 0 1 21 9.828V20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4Zm8 1v4h4l-4-4ZM8 13a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2H8Zm0 4a1 1 0 1 0 0 2h5a1 1 0 1 0 0-2H8Z'/></svg>") center/contain no-repeat;
     }
 
     .notice {
@@ -428,6 +487,15 @@
       max-width: 1600px;
       margin: 1.5rem auto 0;
       padding: 0 2.2rem 2.6rem;
+      display: grid;
+      gap: 1.25rem;
+    }
+
+    @media (min-width: 960px) {
+      .log-section {
+        grid-template-columns: minmax(260px, 0.9fr) minmax(320px, 1.4fr);
+        align-items: start;
+      }
     }
 
     .log-panel {
@@ -442,6 +510,7 @@
       flex-direction: column;
       box-shadow: var(--shadow);
       position: relative;
+      min-height: 0;
     }
 
     .log-panel::after {
@@ -481,6 +550,8 @@
       overflow-y: auto;
       display: grid;
       gap: 0.5rem;
+      flex: 1;
+      min-height: 0;
     }
 
     .log-list li {
@@ -610,13 +681,16 @@
         <input id="rvtools-input" class="file-input" type="file" multiple accept=".xlsx,.xlsm" />
       </div>
       <div class="notice" id="upload-hint">No files imported yet. Select one or more RVTools exports to begin.</div>
-      <div id="selected-files" class="file-list"></div>
     </div>
   </header>
   <main>
     <section id="dashboards"></section>
   </main>
   <section class="log-section">
+    <div class="file-panel">
+      <div class="panel-header" data-default-text="Analyzed Workbooks">Analyzed Workbooks</div>
+      <div id="selected-files" class="file-list"></div>
+    </div>
     <div class="log-panel">
       <div class="log-header">Processing Log</div>
       <ul id="process-log" class="log-list"></ul>
@@ -648,6 +722,204 @@
       'vFileInfo', 'vHealth', 'vMetaData'
     ];
 
+    const VMTOOLS_RELEASE_CALENDAR = Object.freeze({
+      '13.0.1': '2025-07-15', '24843032': '2025-07-15',
+      '13.0.0': '2025-06-17', '24696409': '2025-06-17',
+      '12.5.3': '2025-07-15', '24819442': '2025-07-15',
+      '12.5.2': '2025-05-12', '24697584': '2025-05-12',
+      '12.5.1': '2025-03-25', '24649672': '2025-03-25',
+      '12.5.0': '2024-10-08', '24276846': '2024-10-08',
+      '12.4.5': '2024-06-07', '23787635': '2024-06-07',
+      '12.4.0': '2024-03-21', '23259341': '2024-03-21',
+      '12.3.5': '2023-10-26', '22544099': '2023-10-26',
+      '12.3.0': '2023-08-31', '22234872': '2023-08-31',
+      '10.3.26': '2023-08-31', '22085142': '2023-08-31',
+      '12.2.6': '2023-08-17', '22229486': '2023-08-17',
+      '12.2.5': '2023-06-13', '21855600': '2023-06-13',
+      '12.2.0': '2023-03-07', '21223074': '2023-03-07',
+      '12.1.5': '2022-11-29', '20735119': '2022-11-29',
+      '12.1.0': '2022-08-23', '20219665': '2022-08-23',
+      '10.3.25': '2022-08-23', '20206839': '2022-08-23',
+      '12.0.6': '2022-07-21', '20104755': '2022-07-21',
+      '12.0.5': '2022-05-24', '19716617': '2022-05-24',
+      '12.0.0': '2022-03-01', '19345655': '2022-03-01',
+      '10.3.24': '2021-11-23', '18733423': '2021-11-23',
+      '11.3.5': '2021-09-23', '18557794': '2021-09-23',
+      '11.3.0': '2021-06-17', '18090558': '2021-06-17',
+      '11.2.6': '2021-04-29', '17901274': '2021-04-29',
+      '11.2.5': '2021-01-12', '17337674': '2021-01-12',
+      '11.2.1': '2020-12-10', '17243207': '2020-12-10',
+      '10.3.23': '2020-11-05', '17030940': '2020-11-05',
+      '11.2.0': '2020-10-15', '16938113': '2020-10-15',
+      '11.1.5': '2020-08-18', '16724464': '2020-08-18',
+      '11.1.1': '2020-06-18', '16303738': '2020-06-18',
+      '11.1.0': '2020-05-07', '16036546': '2020-05-07',
+      '10.3.22': '2020-05-07', '15902021': '2020-05-07',
+      '11.0.6': '2020-04-07', '15940789': '2020-04-07',
+      '11.0.5': '2020-01-14', '15389592': '2020-01-14',
+      '11.0.1': '2019-10-17', '14773994': '2019-10-17',
+      '10.3.21': '2019-10-17', '14772444': '2019-10-17',
+      '11.0.0': '2019-09-19', '14549434': '2019-09-19',
+      '10.3.20': '2019-09-19', '14389227': '2019-09-19',
+      '10.3.10': '2019-03-14', '12406962': '2019-03-14',
+      '10.3.5': '2018-11-01', '10430147': '2018-11-01',
+      '10.3.2': '2018-09-12', '9925305': '2018-09-12',
+      '10.2.5': '2018-04-26', '8068406': '2018-04-26',
+      '10.2.1': '2018-03-29', '8267844': '2018-03-29',
+      '10.1.15': '2017-09-26', '6677369': '2017-09-26',
+      '10.1.10': '2017-07-27', '6082533': '2017-07-27',
+      '10.1.7': '2017-05-18', '5541682': '2017-05-18',
+      '10.1.5': '2017-02-23', '5055683': '2017-02-23',
+      '10.1.0': '2016-10-25', '4449150': '2016-10-25'
+    });
+
+    const VMTOOLS_VERSION_LOOKUP = Object.freeze({
+      '13.0.1': { version: '13.0.1', release: '2025-07-15', build: '24843032', internal: '13313' },
+      '24843032': { version: '13.0.1', release: '2025-07-15', build: '24843032', internal: '13313' },
+      '13313': { version: '13.0.1', release: '2025-07-15', build: '24843032', internal: '13313' },
+      '13.0.0': { version: '13.0.0', release: '2025-06-17', build: '24696409', internal: '13312' },
+      '24696409': { version: '13.0.0', release: '2025-06-17', build: '24696409', internal: '13312' },
+      '13312': { version: '13.0.0', release: '2025-06-17', build: '24696409', internal: '13312' },
+      '12.5.3': { version: '12.5.3', release: '2025-07-15', build: '24819442', internal: '12451' },
+      '24819442': { version: '12.5.3', release: '2025-07-15', build: '24819442', internal: '12451' },
+      '12451': { version: '12.5.3', release: '2025-07-15', build: '24819442', internal: '12451' },
+      '12.5.2': { version: '12.5.2', release: '2025-05-12', build: '24697584', internal: '12450' },
+      '24697584': { version: '12.5.2', release: '2025-05-12', build: '24697584', internal: '12450' },
+      '12450': { version: '12.5.2', release: '2025-05-12', build: '24697584', internal: '12450' },
+      '12.5.1': { version: '12.5.1', release: '2025-03-25', build: '24649672', internal: '12449' },
+      '24649672': { version: '12.5.1', release: '2025-03-25', build: '24649672', internal: '12449' },
+      '12449': { version: '12.5.1', release: '2025-03-25', build: '24649672', internal: '12449' },
+      '12.5.0': { version: '12.5.0', release: '2024-10-08', build: '24276846', internal: '12448' },
+      '24276846': { version: '12.5.0', release: '2024-10-08', build: '24276846', internal: '12448' },
+      '12448': { version: '12.5.0', release: '2024-10-08', build: '24276846', internal: '12448' },
+      '12.4.5': { version: '12.4.5', release: '2024-06-07', build: '23787635', internal: '12421' },
+      '23787635': { version: '12.4.5', release: '2024-06-07', build: '23787635', internal: '12421' },
+      '12421': { version: '12.4.5', release: '2024-06-07', build: '23787635', internal: '12421' },
+      '12.4.0': { version: '12.4.0', release: '2024-03-21', build: '23259341', internal: '12416' },
+      '23259341': { version: '12.4.0', release: '2024-03-21', build: '23259341', internal: '12416' },
+      '12416': { version: '12.4.0', release: '2024-03-21', build: '23259341', internal: '12416' },
+      '12.3.5': { version: '12.3.5', release: '2023-10-26', build: '22544099', internal: '12389' },
+      '22544099': { version: '12.3.5', release: '2023-10-26', build: '22544099', internal: '12389' },
+      '12389': { version: '12.3.5', release: '2023-10-26', build: '22544099', internal: '12389' },
+      '12.3.0': { version: '12.3.0', release: '2023-08-31', build: '22234872', internal: '12384' },
+      '22234872': { version: '12.3.0', release: '2023-08-31', build: '22234872', internal: '12384' },
+      '12384': { version: '12.3.0', release: '2023-08-31', build: '22234872', internal: '12384' },
+      '10.3.26': { version: '10.3.26', release: '2023-08-31', build: '22085142', internal: '10362' },
+      '22085142': { version: '10.3.26', release: '2023-08-31', build: '22085142', internal: '10362' },
+      '10362': { version: '10.3.26', release: '2023-08-31', build: '22085142', internal: '10362' },
+      '12.2.6': { version: '12.2.6', release: '2023-08-17', build: '22229486', internal: '12358' },
+      '22229486': { version: '12.2.6', release: '2023-08-17', build: '22229486', internal: '12358' },
+      '12358': { version: '12.2.6', release: '2023-08-17', build: '22229486', internal: '12358' },
+      '12.2.5': { version: '12.2.5', release: '2023-06-13', build: '21855600', internal: '12357' },
+      '21855600': { version: '12.2.5', release: '2023-06-13', build: '21855600', internal: '12357' },
+      '12357': { version: '12.2.5', release: '2023-06-13', build: '21855600', internal: '12357' },
+      '12.2.0': { version: '12.2.0', release: '2023-03-07', build: '21223074', internal: '12352' },
+      '21223074': { version: '12.2.0', release: '2023-03-07', build: '21223074', internal: '12352' },
+      '12352': { version: '12.2.0', release: '2023-03-07', build: '21223074', internal: '12352' },
+      '12.1.5': { version: '12.1.5', release: '2022-11-29', build: '20735119', internal: '12325' },
+      '20735119': { version: '12.1.5', release: '2022-11-29', build: '20735119', internal: '12325' },
+      '12325': { version: '12.1.5', release: '2022-11-29', build: '20735119', internal: '12325' },
+      '12.1.0': { version: '12.1.0', release: '2022-08-23', build: '20219665', internal: '12320' },
+      '20219665': { version: '12.1.0', release: '2022-08-23', build: '20219665', internal: '12320' },
+      '12320': { version: '12.1.0', release: '2022-08-23', build: '20219665', internal: '12320' },
+      '10.3.25': { version: '10.3.25', release: '2022-08-23', build: '20206839', internal: '10361' },
+      '20206839': { version: '10.3.25', release: '2022-08-23', build: '20206839', internal: '10361' },
+      '10361': { version: '10.3.25', release: '2022-08-23', build: '20206839', internal: '10361' },
+      '12.0.6': { version: '12.0.6', release: '2022-07-21', build: '20104755', internal: '12294' },
+      '20104755': { version: '12.0.6', release: '2022-07-21', build: '20104755', internal: '12294' },
+      '12294': { version: '12.0.6', release: '2022-07-21', build: '20104755', internal: '12294' },
+      '12.0.5': { version: '12.0.5', release: '2022-05-24', build: '19716617', internal: '12293' },
+      '19716617': { version: '12.0.5', release: '2022-05-24', build: '19716617', internal: '12293' },
+      '12293': { version: '12.0.5', release: '2022-05-24', build: '19716617', internal: '12293' },
+      '12.0.0': { version: '12.0.0', release: '2022-03-01', build: '19345655', internal: '12288' },
+      '19345655': { version: '12.0.0', release: '2022-03-01', build: '19345655', internal: '12288' },
+      '12288': { version: '12.0.0', release: '2022-03-01', build: '19345655', internal: '12288' },
+      '10.3.24': { version: '10.3.24', release: '2021-11-23', build: '18733423', internal: '10360' },
+      '18733423': { version: '10.3.24', release: '2021-11-23', build: '18733423', internal: '10360' },
+      '10360': { version: '10.3.24', release: '2021-11-23', build: '18733423', internal: '10360' },
+      '11.3.5': { version: '11.3.5', release: '2021-09-23', build: '18557794', internal: '11365' },
+      '18557794': { version: '11.3.5', release: '2021-09-23', build: '18557794', internal: '11365' },
+      '11365': { version: '11.3.5', release: '2021-09-23', build: '18557794', internal: '11365' },
+      '11.3.0': { version: '11.3.0', release: '2021-06-17', build: '18090558', internal: '11360' },
+      '18090558': { version: '11.3.0', release: '2021-06-17', build: '18090558', internal: '11360' },
+      '11360': { version: '11.3.0', release: '2021-06-17', build: '18090558', internal: '11360' },
+      '11.2.6': { version: '11.2.6', release: '2021-04-29', build: '17901274', internal: '11334' },
+      '17901274': { version: '11.2.6', release: '2021-04-29', build: '17901274', internal: '11334' },
+      '11334': { version: '11.2.6', release: '2021-04-29', build: '17901274', internal: '11334' },
+      '11.2.5': { version: '11.2.5', release: '2021-01-12', build: '17337674', internal: '11333' },
+      '17337674': { version: '11.2.5', release: '2021-01-12', build: '17337674', internal: '11333' },
+      '11333': { version: '11.2.5', release: '2021-01-12', build: '17337674', internal: '11333' },
+      '11.2.1': { version: '11.2.1', release: '2020-12-10', build: '17243207', internal: '11329' },
+      '17243207': { version: '11.2.1', release: '2020-12-10', build: '17243207', internal: '11329' },
+      '11329': { version: '11.2.1', release: '2020-12-10', build: '17243207', internal: '11329' },
+      '10.3.23': { version: '10.3.23', release: '2020-11-05', build: '17030940', internal: '10359' },
+      '17030940': { version: '10.3.23', release: '2020-11-05', build: '17030940', internal: '10359' },
+      '10359': { version: '10.3.23', release: '2020-11-05', build: '17030940', internal: '10359' },
+      '11.2.0': { version: '11.2.0', release: '2020-10-15', build: '16938113', internal: '11328' },
+      '16938113': { version: '11.2.0', release: '2020-10-15', build: '16938113', internal: '11328' },
+      '11328': { version: '11.2.0', release: '2020-10-15', build: '16938113', internal: '11328' },
+      '11.1.5': { version: '11.1.5', release: '2020-08-18', build: '16724464', internal: '11301' },
+      '16724464': { version: '11.1.5', release: '2020-08-18', build: '16724464', internal: '11301' },
+      '11301': { version: '11.1.5', release: '2020-08-18', build: '16724464', internal: '11301' },
+      '11.1.1': { version: '11.1.1', release: '2020-06-18', build: '16303738', internal: '11297' },
+      '16303738': { version: '11.1.1', release: '2020-06-18', build: '16303738', internal: '11297' },
+      '11297': { version: '11.1.1', release: '2020-06-18', build: '16303738', internal: '11297' },
+      '11.1.0': { version: '11.1.0', release: '2020-05-07', build: '16036546', internal: '11296' },
+      '16036546': { version: '11.1.0', release: '2020-05-07', build: '16036546', internal: '11296' },
+      '11296': { version: '11.1.0', release: '2020-05-07', build: '16036546', internal: '11296' },
+      '10.3.22': { version: '10.3.22', release: '2020-05-07', build: '15902021', internal: '10358' },
+      '15902021': { version: '10.3.22', release: '2020-05-07', build: '15902021', internal: '10358' },
+      '10358': { version: '10.3.22', release: '2020-05-07', build: '15902021', internal: '10358' },
+      '11.0.6': { version: '11.0.6', release: '2020-04-07', build: '15940789', internal: '11270' },
+      '15940789': { version: '11.0.6', release: '2020-04-07', build: '15940789', internal: '11270' },
+      '11270': { version: '11.0.6', release: '2020-04-07', build: '15940789', internal: '11270' },
+      '11.0.5': { version: '11.0.5', release: '2020-01-14', build: '15389592', internal: '11269' },
+      '15389592': { version: '11.0.5', release: '2020-01-14', build: '15389592', internal: '11269' },
+      '11269': { version: '11.0.5', release: '2020-01-14', build: '15389592', internal: '11269' },
+      '11.0.1': { version: '11.0.1', release: '2019-10-17', build: '14773994', internal: '11265' },
+      '14773994': { version: '11.0.1', release: '2019-10-17', build: '14773994', internal: '11265' },
+      '11265': { version: '11.0.1', release: '2019-10-17', build: '14773994', internal: '11265' },
+      '10.3.21': { version: '10.3.21', release: '2019-10-17', build: '14772444', internal: '10357' },
+      '14772444': { version: '10.3.21', release: '2019-10-17', build: '14772444', internal: '10357' },
+      '10357': { version: '10.3.21', release: '2019-10-17', build: '14772444', internal: '10357' },
+      '11.0.0': { version: '11.0.0', release: '2019-09-19', build: '14549434', internal: '11264' },
+      '14549434': { version: '11.0.0', release: '2019-09-19', build: '14549434', internal: '11264' },
+      '11264': { version: '11.0.0', release: '2019-09-19', build: '14549434', internal: '11264' },
+      '10.3.20': { version: '10.3.20', release: '2019-09-19', build: '14389227', internal: '10356' },
+      '14389227': { version: '10.3.20', release: '2019-09-19', build: '14389227', internal: '10356' },
+      '10356': { version: '10.3.20', release: '2019-09-19', build: '14389227', internal: '10356' },
+      '10.3.10': { version: '10.3.10', release: '2019-03-14', build: '12406962', internal: '10346' },
+      '12406962': { version: '10.3.10', release: '2019-03-14', build: '12406962', internal: '10346' },
+      '10346': { version: '10.3.10', release: '2019-03-14', build: '12406962', internal: '10346' },
+      '10.3.5': { version: '10.3.5', release: '2018-11-01', build: '10430147', internal: '10341' },
+      '10430147': { version: '10.3.5', release: '2018-11-01', build: '10430147', internal: '10341' },
+      '10341': { version: '10.3.5', release: '2018-11-01', build: '10430147', internal: '10341' },
+      '10.3.2': { version: '10.3.2', release: '2018-09-12', build: '9925305', internal: '10338' },
+      '9925305': { version: '10.3.2', release: '2018-09-12', build: '9925305', internal: '10338' },
+      '10338': { version: '10.3.2', release: '2018-09-12', build: '9925305', internal: '10338' },
+      '10.2.5': { version: '10.2.5', release: '2018-04-26', build: '8068406', internal: '10309' },
+      '8068406': { version: '10.2.5', release: '2018-04-26', build: '8068406', internal: '10309' },
+      '10309': { version: '10.2.5', release: '2018-04-26', build: '8068406', internal: '10309' },
+      '10.2.1': { version: '10.2.1', release: '2018-03-29', build: '8267844', internal: '10305' },
+      '8267844': { version: '10.2.1', release: '2018-03-29', build: '8267844', internal: '10305' },
+      '10305': { version: '10.2.1', release: '2018-03-29', build: '8267844', internal: '10305' },
+      '10.1.15': { version: '10.1.15', release: '2017-09-26', build: '6677369', internal: '10287' },
+      '6677369': { version: '10.1.15', release: '2017-09-26', build: '6677369', internal: '10287' },
+      '10287': { version: '10.1.15', release: '2017-09-26', build: '6677369', internal: '10287' },
+      '10.1.10': { version: '10.1.10', release: '2017-07-27', build: '6082533', internal: '10282' },
+      '6082533': { version: '10.1.10', release: '2017-07-27', build: '6082533', internal: '10282' },
+      '10282': { version: '10.1.10', release: '2017-07-27', build: '6082533', internal: '10282' },
+      '10.1.7': { version: '10.1.7', release: '2017-05-18', build: '5541682', internal: '10279' },
+      '5541682': { version: '10.1.7', release: '2017-05-18', build: '5541682', internal: '10279' },
+      '10279': { version: '10.1.7', release: '2017-05-18', build: '5541682', internal: '10279' },
+      '10.1.5': { version: '10.1.5', release: '2017-02-23', build: '5055683', internal: '10277' },
+      '5055683': { version: '10.1.5', release: '2017-02-23', build: '5055683', internal: '10277' },
+      '10277': { version: '10.1.5', release: '2017-02-23', build: '5055683', internal: '10277' },
+      '10.1.0': { version: '10.1.0', release: '2016-10-25', build: '4449150', internal: '10272' },
+      '4449150': { version: '10.1.0', release: '2016-10-25', build: '4449150', internal: '10272' },
+      '10272': { version: '10.1.0', release: '2016-10-25', build: '4449150', internal: '10272' }
+    });
+
     const EOS_CALENDAR = {
       vcenter: {
         '6.0': '2022-03-12',
@@ -664,16 +936,7 @@
         '7.0': '2025-04-02',
         '8.0': '2027-10-31'
       },
-      vmtools: {
-        '11296': '2019-09-19',
-        '11360': '2020-04-02',
-        '11420': '2020-11-19',
-        '11510': '2021-11-11',
-        '11610': '2022-09-15',
-        '11700': '2023-10-26',
-        '11800': '2024-03-28',
-        '12448': '2025-04-04'
-      },
+      vmtools: VMTOOLS_RELEASE_CALENDAR,
       hardware: {
         11: '2020-06-01',
         12: '2020-12-15',
@@ -714,7 +977,7 @@
       { id: 'dashboard-19', title: 'Dashboard 19 — CD/DVD Connectivity', subtitle: 'VM media device attachment risks', build: buildDashboard19 },
       { id: 'dashboard-20', title: 'Dashboard 20 — CD/DVD Cleanup Plan', subtitle: 'Top VMs with mounted media and remediation tips', build: buildDashboard20 },
       { id: 'dashboard-21', title: 'Dashboard 21 — VMware Tools Posture', subtitle: 'Runtime state and version fragmentation', build: buildDashboard21 },
-      { id: 'dashboard-22', title: 'Dashboard 22 — VMware Tools Lifecycle Heatmap', subtitle: 'Out-of-date tools highlight and modernization guidance', build: buildDashboard22 },
+      { id: 'dashboard-22', title: 'Dashboard 22 — VMware Tools Status', subtitle: 'Guest tools health posture across the estate', build: buildDashboard22 },
       { id: 'dashboard-23', title: 'Dashboard 23 — Port-Group Security', subtitle: 'Promiscuous mode and MAC change posture', build: buildDashboard23 },
       { id: 'dashboard-24', title: 'Dashboard 24 — Port-Group Exceptions', subtitle: 'Sample of permissive port-groups and mitigation', build: buildDashboard24 },
       { id: 'dashboard-25', title: 'Dashboard 25 — Virtual Hardware Versions', subtitle: 'Hardware compatibility distribution across VMs', build: buildDashboard25 },
@@ -819,7 +1082,7 @@
         logEvent('File selection cleared. Waiting for RVTools exports.');
         return;
       }
-      state.selectedFiles = files;
+      state.selectedFiles = [];
       logEvent('File selection received', {
         count: files.length,
         files: files.map(file => ({ name: file.name, size: file.size }))
@@ -829,6 +1092,10 @@
       try {
         const raw = await loadWorkbooks(files);
         state.data = raw;
+        state.selectedFiles = (raw.workbooks || files).map(entry => ({
+          name: entry.workbookId || entry.name || 'RVTools Export',
+          rvtoolsVersion: entry.rvtoolsVersion || entry.version || null
+        }));
         logEvent('Aggregated workbook data', { workbooks: raw.workbooks.length, sheetsLoaded: raw.sheetsLoaded });
         state.metrics = computeMetrics(raw);
         logEvent('Metrics computed', {
@@ -845,6 +1112,7 @@
         logEvent('Processing failed', { error: error.message });
         state.data = null;
         state.metrics = null;
+        state.selectedFiles = [];
         setUploadHint('Processing failed. Check log for details.', true);
         updateSelectedFiles([], 'Selected files:');
       }
@@ -862,22 +1130,39 @@
     function updateSelectedFiles(files, heading = 'Selected files:') {
       const container = document.getElementById('selected-files');
       if (!container) return;
+      const panel = container.closest('.file-panel');
+      const headerEl = panel?.querySelector('.panel-header');
+      const defaultHeading = headerEl?.dataset?.defaultText;
       container.innerHTML = '';
       if (!files || !files.length) {
         container.style.display = 'none';
+        if (headerEl && defaultHeading) {
+          headerEl.textContent = defaultHeading;
+        }
+        if (panel) panel.style.display = 'none';
         return;
       }
-      const strong = document.createElement('strong');
-      strong.textContent = heading;
+      if (headerEl) {
+        headerEl.textContent = heading || defaultHeading || headerEl.textContent;
+      }
+      if (panel) panel.style.display = 'flex';
+
       const list = document.createElement('ul');
       files.forEach(file => {
         const li = document.createElement('li');
-        li.textContent = file.name;
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'file-name';
+        nameSpan.textContent = file.name;
+        li.appendChild(nameSpan);
+        const version = file.rvtoolsVersion || file.version || file.metaVersion;
+        const versionSpan = document.createElement('span');
+        versionSpan.className = 'file-version';
+        versionSpan.textContent = version ? `RVTools ${version}` : 'RVTools version unknown';
+        li.appendChild(versionSpan);
         list.appendChild(li);
       });
-      container.appendChild(strong);
       container.appendChild(list);
-      container.style.display = '';
+      container.style.display = 'block';
     }
 
     function logEvent(message, data) {
@@ -1277,13 +1562,26 @@
       raw.vTools.forEach(row => {
         const vm = idx.vms.get(row['VM']);
         if (!vm) return;
+        const versionCandidates = [
+          row['Tools Version'],
+          row['Tool Version'],
+          row['ToolsVersion'],
+          row['Required Version'],
+          row['Tool Internal Version'],
+          row['Tools Internal Version']
+        ].filter(value => value !== undefined && value !== null && String(value).trim());
+        const resolvedInfo = resolveVmtoolsInfo(versionCandidates[0] || '');
         vm.vmtools = {
           status: row['Tools'] || null,
-          version: row['Tools Version'] || null,
+          version: row['Tools Version'] || row['Tool Version'] || null,
           requiredVersion: row['Required Version'] || null,
           upgradeable: (row['Upgradeable'] || '').toString().toLowerCase() === 'yes',
           upgradePolicy: row['Upgrade Policy'] || null,
-          syncTime: valueToBool(row['Sync time'])
+          syncTime: valueToBool(row['Sync time']),
+          internalVersion: row['Tool Internal Version'] || row['Tools Internal Version'] || resolvedInfo?.internal || null,
+          publicVersion: normalizeVmtoolsVersion(resolvedInfo?.version || row['Tools Version'] || row['Tool Version'] || '' ) || null,
+          releaseDate: resolvedInfo?.release || null,
+          buildNumber: resolvedInfo?.build || null
         };
       });
 
@@ -1836,6 +2134,39 @@
       };
     }
 
+    function resolveVmtoolsInfo(identifier) {
+      if (identifier === null || identifier === undefined) return null;
+      const raw = identifier.toString().trim();
+      if (!raw) return null;
+      const normalized = raw.replace(/\s+/g, ' ');
+      const candidates = new Set([raw, normalized]);
+      const noComma = raw.replace(/,/g, '');
+      if (noComma && noComma !== raw) {
+        candidates.add(noComma);
+        candidates.add(noComma.replace(/\s+/g, ' '));
+      }
+      const buildMatch = raw.match(/build\s*(\d{4,})/i);
+      if (buildMatch) candidates.add(buildMatch[1]);
+      const buildMatchNoComma = noComma.match(/build\s*(\d{4,})/i);
+      if (buildMatchNoComma) candidates.add(buildMatchNoComma[1]);
+      const digits = raw.match(/\d{4,}/g);
+      if (digits) digits.forEach(value => candidates.add(value));
+      const digitsNoComma = noComma.match(/\d{4,}/g);
+      if (digitsNoComma) digitsNoComma.forEach(value => candidates.add(value));
+      if (normalized.includes(' ')) candidates.add(normalized.split(' ')[0]);
+      for (const candidate of candidates) {
+        if (!candidate) continue;
+        const info = VMTOOLS_VERSION_LOOKUP[candidate];
+        if (info) return info;
+      }
+      return null;
+    }
+
+    function normalizeVmtoolsVersion(value) {
+      if (value === null || value === undefined) return '';
+      return value.toString().replace(/[,]/g, '').trim();
+    }
+
     function computeVmToolsMetrics(idx) {
       const vms = Array.from(idx.vms.values()).filter(vm => !vm.isTemplate);
       const statusCounts = vms.reduce((acc, vm) => {
@@ -1844,30 +2175,111 @@
         return acc;
       }, {});
       const versionCounts = new Map();
+      const releaseHints = new Map();
       const outdated = [];
       vms.forEach(vm => {
-        const version = vm.vmtools?.version ? vm.vmtools.version.toString() : 'unknown';
-        versionCounts.set(version, (versionCounts.get(version) || 0) + 1);
+        const preferredVersion = vm.vmtools?.publicVersion || vm.vmtools?.version || vm.vmtools?.requiredVersion || vm.vmtools?.internalVersion || '';
+        const info = resolveVmtoolsInfo(preferredVersion);
+        let canonical = info?.version || preferredVersion;
+        canonical = normalizeVmtoolsVersion(canonical) || 'unknown';
+        versionCounts.set(canonical, (versionCounts.get(canonical) || 0) + 1);
+        const knownRelease = vm.vmtools?.releaseDate || info?.release;
+        if (knownRelease) releaseHints.set(canonical, knownRelease);
         if (vm.vmtools?.upgradeable) outdated.push(vm);
       });
-      const topVersions = Array.from(versionCounts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([version, count]) => {
-        const eosState = computeLifecycleState(version, EOS_CALENDAR.vmtools);
-        return { version, count, eosState };
+      const versionsWithRelease = Array.from(versionCounts.entries()).map(([version, count]) => {
+        let releaseStr = releaseHints.get(version) || resolveVmtoolsInfo(version)?.release || '';
+        if (!releaseStr) {
+          const calendarEntry = computeVersionCalendarEntry(version, VMTOOLS_RELEASE_CALENDAR);
+          if (calendarEntry.date) releaseStr = calendarEntry.date.toISOString().slice(0, 10);
+        }
+        let releaseDate = null;
+        if (releaseStr) {
+          const parsed = new Date(releaseStr);
+          if (!Number.isNaN(parsed.getTime())) releaseDate = parsed;
+        }
+        return { version, count, releaseDate };
       });
+
+      versionsWithRelease.sort((a, b) => {
+        if (a.releaseDate && b.releaseDate) return a.releaseDate - b.releaseDate;
+        if (a.releaseDate) return -1;
+        if (b.releaseDate) return 1;
+        return b.count - a.count;
+      });
+
+      const topVersions = versionsWithRelease.slice(0, 10);
       return { statusCounts, versionCounts: Array.from(versionCounts.entries()), topVersions, outdated };
     }
 
+    function computeVersionCalendarEntry(version, calendar) {
+      if (!version) return { key: null, date: null };
+      const vmtoolsInfo = resolveVmtoolsInfo(version);
+      if (vmtoolsInfo?.release) {
+        const directDate = new Date(vmtoolsInfo.release);
+        return { key: vmtoolsInfo.version, date: Number.isNaN(directDate.getTime()) ? null : directDate };
+      }
+      const versionString = version.toString().trim();
+      const rawCandidates = [];
+      const buildMatch = versionString.match(/build\s*(\d{4,})/i);
+      if (buildMatch) rawCandidates.push(buildMatch[1]);
+      const standaloneDigits = versionString.match(/\d{4,}/g);
+      if (standaloneDigits) rawCandidates.push(...standaloneDigits);
+      if (versionString.includes(' ')) rawCandidates.push(versionString.split(/\s+/)[0]);
+      rawCandidates.push(versionString);
+      const candidates = Array.from(new Set(rawCandidates.filter(Boolean)));
+
+      let key = candidates.find(candidate => Object.prototype.hasOwnProperty.call(calendar, candidate));
+
+      const numericKeys = Object.keys(calendar)
+        .map(calendarKey => ({
+          key: calendarKey,
+          numeric: Number(calendarKey.replace(/[^0-9.]/g, ''))
+        }))
+        .filter(item => Number.isFinite(item.numeric))
+        .sort((a, b) => a.numeric - b.numeric);
+
+      if (!key && numericKeys.length) {
+        const candidateNumbers = candidates
+          .map(value => Number(value.replace(/[^0-9.]/g, '')))
+          .filter(num => Number.isFinite(num));
+
+        if (candidateNumbers.length) {
+          candidateNumbers.forEach(candidateNumeric => {
+            let fallback = numericKeys[0];
+            let closest = numericKeys[0];
+            let smallestDiff = Math.abs(candidateNumeric - closest.numeric);
+
+            numericKeys.forEach(item => {
+              const diff = Math.abs(candidateNumeric - item.numeric);
+              if (diff < smallestDiff) {
+                smallestDiff = diff;
+                closest = item;
+              }
+              if (item.numeric <= candidateNumeric + 1e-6) fallback = item;
+            });
+
+            if (!key) {
+              key = fallback?.key || closest?.key;
+            }
+          });
+        }
+      }
+
+      if (!key) return { key: null, date: null };
+
+      const calendarDate = new Date(calendar[key]);
+      return { key, date: Number.isNaN(calendarDate.getTime()) ? null : calendarDate };
+    }
+
     function computeLifecycleState(version, calendar) {
-      if (!version) return { state: 'unknown', eosDate: null };
-      const today = Date.now();
-      const key = Object.keys(calendar).find(key => version.toString().startsWith(key));
-      if (!key) return { state: 'unknown', eosDate: null };
-      const eosDate = new Date(calendar[key]);
-      if (Number.isNaN(eosDate.getTime())) return { state: 'unknown', eosDate: null };
-      const remaining = eosDate.getTime() - today;
-      if (remaining <= 0) return { state: 'expired', eosDate };
-      if (remaining <= SIX_MONTHS_MS) return { state: 'expiring', eosDate };
-      return { state: 'healthy', eosDate };
+      const { date } = computeVersionCalendarEntry(version, calendar);
+      if (!date) return { state: 'unknown', eosDate: null };
+      const diff = date.getTime() - Date.now();
+      if (!Number.isFinite(diff)) return { state: 'unknown', eosDate: null };
+      if (diff <= 0) return { state: 'expired', eosDate: date };
+      if (diff <= SIX_MONTHS_MS) return { state: 'expiring', eosDate: date };
+      return { state: 'healthy', eosDate: date };
     }
 
     function computeNetworkSecurityMetrics(idx) {
@@ -1889,9 +2301,14 @@
       idx.vms.forEach(vm => {
         if (!vm.hardwareVersion) return;
         const version = vm.hardwareVersion;
-        const existing = hwLevels.get(version) || { count: 0, state: computeLifecycleState(version, EOS_CALENDAR.hardware) };
+        const lifecycle = computeLifecycleState(version, EOS_CALENDAR.hardware);
+        const releaseEntry = computeVersionCalendarEntry(version, EOS_CALENDAR.hardware);
+        const existing = hwLevels.get(version) || { count: 0, state: lifecycle, releaseDate: releaseEntry.date || null };
         existing.count += 1;
-        existing.state = computeLifecycleState(version, EOS_CALENDAR.hardware);
+        existing.state = lifecycle;
+        if (releaseEntry.date && (!existing.releaseDate || releaseEntry.date < existing.releaseDate)) {
+          existing.releaseDate = releaseEntry.date;
+        }
         hwLevels.set(version, existing);
       });
       return { vmHardware: hwLevels };
@@ -2707,6 +3124,14 @@
       const labels = metrics.clusters.clusterStats.map(cluster => cluster.name);
       const cpuData = metrics.clusters.clusterStats.map(cluster => Number(cluster.cpuOvercommit.toFixed(2)));
       const memData = metrics.clusters.clusterStats.map(cluster => Number(cluster.memOvercommit.toFixed(2)));
+      const cpuColors = colorize(cpuData, [
+        { when: value => value >= 4.5, color: BRAND_COLORS.red },
+        { when: value => value >= 3.5, color: BRAND_COLORS.gold }
+      ], BRAND_COLORS.teal);
+      const memColors = colorize(memData, [
+        { when: value => value >= 1.5, color: BRAND_COLORS.red },
+        { when: value => value >= 1.2, color: BRAND_COLORS.gold }
+      ], BRAND_COLORS.blue);
       renderChart(chartId, {
         type: 'bar',
         data: {
@@ -2715,14 +3140,16 @@
             {
               label: 'CPU Overcommit (vCPU : core)',
               data: cpuData,
-              backgroundColor: BRAND_COLORS.teal,
-              borderColor: BRAND_COLORS.teal
+              backgroundColor: cpuColors,
+              borderColor: cpuColors,
+              borderWidth: 1
             },
             {
               label: 'Memory Overcommit (Allocated : Physical)',
               data: memData,
-              backgroundColor: BRAND_COLORS.red,
-              borderColor: BRAND_COLORS.red
+              backgroundColor: memColors,
+              borderColor: memColors,
+              borderWidth: 1
             }
           ]
         },
@@ -2825,6 +3252,13 @@
       return palette;
     }
 
+    function colorize(values, rules, fallback = BRAND_COLORS.teal) {
+      return values.map(value => {
+        const match = rules.find(rule => rule.when(value));
+        return match ? match.color : fallback;
+      });
+    }
+
     function buildDashboard5(container, metrics) {
       const headers = ['Component', 'Version', 'Build', 'Count', 'Lifecycle'];
       const rows = [];
@@ -2874,6 +3308,10 @@
       container.appendChild(createChartContainer(chartId, null, 'chart-wrapper--wide'));
       const labels = metrics.datastores.datastores.map(ds => ds.name);
       const data = metrics.datastores.datastores.map(ds => Number(ds.freePct.toFixed(1)));
+      const barColors = colorize(data, [
+        { when: value => value < 15, color: BRAND_COLORS.red },
+        { when: value => value < 30, color: BRAND_COLORS.gold }
+      ], BRAND_COLORS.green);
       renderChart(chartId, {
         type: 'bar',
         data: {
@@ -2881,15 +3319,17 @@
           datasets: [{
             label: 'Free Space (%)',
             data,
-            backgroundColor: BRAND_COLORS.teal,
-            borderColor: BRAND_COLORS.teal
+            backgroundColor: barColors,
+            borderColor: barColors,
+            borderWidth: 1
           }]
         },
         options: {
+          indexAxis: 'y',
           plugins: { legend: { display: false } },
           scales: {
-            x: { ticks: { color: AXIS_LABEL_COLOR } },
-            y: { ticks: { color: AXIS_LABEL_COLOR }, beginAtZero: true, max: 100 }
+            x: { ticks: { color: AXIS_LABEL_COLOR }, beginAtZero: true, max: 100 },
+            y: { ticks: { color: AXIS_LABEL_COLOR } }
           }
         }
       });
@@ -3014,14 +3454,22 @@
     function buildDashboard12(container, metrics) {
       const chartId = 'large-vm-cluster-chart';
       container.appendChild(createChartContainer(chartId, 'radar'));
+      const clusters = metrics.largeVMs.perCluster.map(item => item.cluster);
+      const counts = metrics.largeVMs.perCluster.map(item => item.count);
+      const barColors = colorize(counts, [
+        { when: value => value >= 25, color: BRAND_COLORS.red },
+        { when: value => value >= 12, color: BRAND_COLORS.gold }
+      ], BRAND_COLORS.blue);
       renderChart(chartId, {
         type: 'bar',
         data: {
-          labels: metrics.largeVMs.perCluster.map(item => item.cluster),
+          labels: clusters,
           datasets: [{
             label: 'Large VM Count',
-            data: metrics.largeVMs.perCluster.map(item => item.count),
-            backgroundColor: BRAND_COLORS.blue
+            data: counts,
+            backgroundColor: barColors,
+            borderColor: barColors,
+            borderWidth: 1
           }]
         },
         options: {
@@ -3169,14 +3617,9 @@
 
     function buildDashboard21(container, metrics) {
       const chartStatus = 'vmtools-status-chart';
-      const chartVersion = 'vmtools-version-chart';
-      const wrap = document.createElement('div');
-      wrap.className = 'two-column';
-      wrap.appendChild(createChartContainer(chartStatus));
-      wrap.appendChild(createChartContainer(chartVersion));
-      container.appendChild(wrap);
+      container.appendChild(createChartContainer(chartStatus));
 
-      const statuses = Object.keys(metrics.vmTools.statusCounts);
+      const statuses = Object.keys(metrics.vmTools.statusCounts || {});
       renderChart(chartStatus, {
         type: 'pie',
         data: {
@@ -3185,30 +3628,31 @@
         },
         options: { plugins: { legend: { position: 'bottom', labels: { color: AXIS_LABEL_COLOR } } } }
       });
-
-      const versionLabels = metrics.vmTools.topVersions.map(item => item.version);
-      renderChart(chartVersion, {
-        type: 'pie',
-        data: {
-          labels: versionLabels,
-          datasets: [{ data: metrics.vmTools.topVersions.map(item => item.count), backgroundColor: generatePalette(versionLabels.length, 'teal') }]
-        },
-        options: { plugins: { legend: { position: 'bottom', labels: { color: AXIS_LABEL_COLOR } } } }
-      });
     }
 
     function buildDashboard22(container, metrics) {
-      const headers = ['VMware Tools Version', 'VM Count', 'Lifecycle'];
-      const rows = metrics.vmTools.topVersions.map(item => [
-        item.version,
-        item.count,
-        lifecycleBadge(item.eosState)
-      ]);
+      const statusEntries = Object.entries(metrics.vmTools.statusCounts || {});
+      if (!statusEntries.length) {
+        container.appendChild(createNoDataNotice('No VMware Tools status information available.'));
+        return;
+      }
+
+      const formatState = state => {
+        if (!state) return 'Unknown';
+        const spaced = state.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ');
+        return spaced.replace(/\b\w/g, letter => letter.toUpperCase());
+      };
+
+      const headers = ['State', 'VM Count'];
+      const rows = statusEntries
+        .sort((a, b) => b[1] - a[1])
+        .map(([state, count]) => [formatState(state), formatNumber(count)]);
+
       container.appendChild(createTable(headers, rows));
       container.appendChild(createRecommendationList([
-        'Standardize on the latest VMware Tools release to unlock OS customization and quiesced snapshots.',
-        'Stage Tools upgrades via vSphere lifecycle manager baselines or guest OS management tools.',
-        'Sequence Tools upgrades before ESXi updates to avoid driver mismatches.'
+        'Target VMs flagged as needing upgrades to align with supported VMware Tools releases.',
+        'Automate Tools deployments through lifecycle manager baselines or guest OS management.',
+        'Investigate VMs reporting “Not Running” or “Not Installed” statuses to restore guest integration features.'
       ]));
     }
 
@@ -3280,12 +3724,19 @@
     }
 
     function buildDashboard26(container, metrics) {
-      const headers = ['Hardware Version', 'VM Count', 'Lifecycle'];
-      const rows = Array.from(metrics.hardware.vmHardware.entries()).sort((a, b) => Number(a[0]) - Number(b[0])).slice(0, 10).map(([version, data]) => [
-        version,
-        data.count,
-        lifecycleBadge(data.state)
-      ]);
+      const headers = ['Hardware Version', 'VM Count'];
+      const rows = Array.from(metrics.hardware.vmHardware.entries())
+        .sort((a, b) => {
+          const dateA = a[1].releaseDate ? a[1].releaseDate.getTime() : Infinity;
+          const dateB = b[1].releaseDate ? b[1].releaseDate.getTime() : Infinity;
+          if (dateA !== dateB) return dateA - dateB;
+          return Number(a[0]) - Number(b[0]);
+        })
+        .slice(0, 10)
+        .map(([version, data]) => [
+          version,
+          data.count
+        ]);
       container.appendChild(createTable(headers, rows));
       container.appendChild(createRecommendationList([
         'Upgrade virtual hardware to match target ESXi release before enabling new CPU features.',
@@ -3725,11 +4176,23 @@
     function buildDashboard56(container, metrics) {
       const chartId = 'vm-per-datastore-chart';
       container.appendChild(createChartContainer(chartId));
+      const datastoreLabels = metrics.density.datastores.map(item => item.name);
+      const datastoreCounts = metrics.density.datastores.map(item => item.vmCount);
+      const datastoreColors = colorize(datastoreCounts, [
+        { when: value => value >= 180, color: BRAND_COLORS.red },
+        { when: value => value >= 120, color: BRAND_COLORS.gold }
+      ], BRAND_COLORS.teal);
       renderChart(chartId, {
         type: 'bar',
         data: {
-          labels: metrics.density.datastores.map(item => item.name),
-          datasets: [{ label: 'VM Count', data: metrics.density.datastores.map(item => item.vmCount), backgroundColor: BRAND_COLORS.gold }]
+          labels: datastoreLabels,
+          datasets: [{
+            label: 'VM Count',
+            data: datastoreCounts,
+            backgroundColor: datastoreColors,
+            borderColor: datastoreColors,
+            borderWidth: 1
+          }]
         },
         options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { color: AXIS_LABEL_COLOR } }, y: { beginAtZero: true, ticks: { color: AXIS_LABEL_COLOR } } } }
       });
@@ -3743,13 +4206,32 @@
     function buildDashboard57(container, metrics) {
       const chartId = 'vm-per-host-chart';
       container.appendChild(createChartContainer(chartId));
+      const hostLabels = metrics.density.hosts.map(item => item.name);
+      const hostCounts = metrics.density.hosts.map(item => item.vmCount);
+      const hostColors = colorize(hostCounts, [
+        { when: value => value >= 80, color: BRAND_COLORS.red },
+        { when: value => value >= 50, color: BRAND_COLORS.gold }
+      ], BRAND_COLORS.green);
       renderChart(chartId, {
         type: 'bar',
         data: {
-          labels: metrics.density.hosts.map(item => item.name),
-          datasets: [{ label: 'VM Count', data: metrics.density.hosts.map(item => item.vmCount), backgroundColor: BRAND_COLORS.gold }]
+          labels: hostLabels,
+          datasets: [{
+            label: 'VM Count',
+            data: hostCounts,
+            backgroundColor: hostColors,
+            borderColor: hostColors,
+            borderWidth: 1
+          }]
         },
-        options: { plugins: { legend: { display: false } }, scales: { x: { ticks: { color: AXIS_LABEL_COLOR } }, y: { beginAtZero: true, ticks: { color: AXIS_LABEL_COLOR } } } }
+        options: {
+          indexAxis: 'y',
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: AXIS_LABEL_COLOR }, beginAtZero: true },
+            y: { ticks: { color: AXIS_LABEL_COLOR } }
+          }
+        }
       });
       container.appendChild(createRecommendationList([
         'Balance VM counts across hosts to maintain N+1 compliance.',
@@ -3823,14 +4305,6 @@
         ['NTP', totals.ntp.configured, totals.ntp.notConfigured]
       ];
       container.appendChild(createTable(summaryHeaders, summaryRows));
-
-      const headers = ['Host', 'DNS Configured', 'NTP Configured'];
-      const rows = metrics.hostServices.gaps.map(host => [
-        host.name,
-        badge(host.dnsConfigured ? 'Yes' : 'No', host.dnsConfigured ? 'pill-green' : 'pill-red'),
-        badge(host.ntpConfigured ? 'Yes' : 'No', host.ntpConfigured ? 'pill-green' : 'pill-red')
-      ]);
-      container.appendChild(createTable(headers, rows));
 
       container.appendChild(createRecommendationList([
         'Configure forward and reverse DNS for every ESXi host to avoid certificate mismatches.',
