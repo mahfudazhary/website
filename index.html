@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexaOrb | Cloud, Automation, and AI Consulting</title>
+<style>
+:root {
+  --primary: #3465fd;
+  --primary-dark: #1e3ea8;
+  --accent: #1dd1a1;
+  --dark: #0d1b2a;
+  --text: #1f2933;
+  --muted: #5a6572;
+  --light: #f5f7fb;
+}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  color: var(--text);
+  background: #ffffff;
+  line-height: 1.6;
+  scroll-behavior: smooth;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 10px rgba(13, 27, 42, 0.07);
+  z-index: 1000;
+}
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.logo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--primary);
+}
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 1rem;
+}
+nav a {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+nav a:hover,
+nav a:focus {
+  color: var(--primary);
+}
+.nav-toggle {
+  display: none;
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+}
+.nav-links {
+  display: flex;
+}
+.hero {
+  padding: 7rem 1.5rem 4rem;
+  background: radial-gradient(circle at top right, rgba(52, 101, 253, 0.25), transparent 40%), linear-gradient(135deg, #0b1732, #131b2f 60%, #0b1020);
+  color: #f2f6ff;
+  text-align: center;
+}
+.hero-content {
+  max-width: 900px;
+  margin: 0 auto;
+}
+.hero h1 {
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  margin-bottom: 1rem;
+}
+.hero p {
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+  color: #d6defa;
+}
+.hero .cta-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+.btn {
+  padding: 0.9rem 1.75rem;
+  border-radius: 999px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  text-align: center;
+}
+.btn span {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(4, 18, 26, 0.8);
+}
+.btn-primary {
+  background: var(--accent);
+  color: #04121a;
+  box-shadow: 0 10px 20px rgba(29, 209, 161, 0.25);
+}
+.btn-secondary {
+  background: transparent;
+  color: #f2f6ff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+.btn-secondary span {
+  color: #d6defa;
+}
+.btn:hover {
+  transform: translateY(-2px);
+}
+section {
+  padding: 4rem 1.5rem;
+}
+.section-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+section h2 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: var(--dark);
+}
+.intro {
+  max-width: 900px;
+  margin-bottom: 2rem;
+  color: var(--muted);
+}
+.practice-grid,
+.services-grid,
+.solution-columns,
+.solution-breakdown,
+.challenges-grid,
+.day-services {
+  display: grid;
+  gap: 1.5rem;
+}
+.practice-grid {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+.card {
+  background: #ffffff;
+  border: 1px solid #e6eaf3;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 10px 25px rgba(13, 27, 42, 0.05);
+}
+.card h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+  color: var(--primary-dark);
+}
+.services-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.service-meta,
+.tech-strip {
+  margin-top: 2rem;
+  background: var(--light);
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+.tech-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.tech-strip span {
+  background: #fff;
+  border: 1px solid #e0e5f2;
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+}
+.lifecycle-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.step {
+  background: linear-gradient(135deg, #f8fafc, #eef3ff);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #dde5fb;
+}
+.step span {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+.day-services {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.day-card h3 {
+  margin-bottom: 0.5rem;
+}
+.solutions {
+  background: var(--light);
+}
+.solution-columns {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.solution-columns ul,
+.solution-breakdown ul,
+.challenges-list ul,
+.responses-list ul,
+.why-list ul,
+.how-list ul {
+  list-style: none;
+}
+.solution-columns li::before,
+.solution-breakdown li::before,
+.why-list li::before,
+.how-list li::before {
+  content: "•";
+  color: var(--accent);
+  margin-right: 0.5rem;
+}
+.solution-breakdown {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.challenges-grid {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.challenges-list li {
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+.responses-list li {
+  margin-bottom: 1rem;
+  color: var(--muted);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+}
+th,
+td {
+  border: 1px solid #dfe6f5;
+  padding: 1rem;
+  vertical-align: top;
+}
+th {
+  background: #f0f5ff;
+  text-align: left;
+  color: var(--primary-dark);
+}
+.contact-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+.contact-form input,
+.contact-form select,
+.contact-form textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #cfd8ea;
+  font-size: 1rem;
+}
+.contact-form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+.contact-form button {
+  grid-column: 1 / -1;
+  justify-self: flex-start;
+}
+.contact-info {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  color: var(--muted);
+}
+.contact-info a {
+  color: var(--primary);
+  font-weight: 600;
+}
+footer {
+  background: #050a18;
+  color: #c0c8e0;
+  padding: 2rem 1.5rem;
+}
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+}
+.footer-links {
+  display: flex;
+  gap: 1rem;
+}
+.footer-links a {
+  color: #9ca7c9;
+}
+@media (max-width: 900px) {
+  nav ul {
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.5rem 0;
+  }
+  .nav-links {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #fff;
+    width: 100%;
+    max-height: 0;
+    overflow: hidden;
+    flex-direction: column;
+    transition: max-height 0.3s ease;
+    box-shadow: 0 10px 30px rgba(13, 27, 42, 0.1);
+  }
+  .nav-links.open {
+    max-height: 500px;
+  }
+  .nav-toggle {
+    display: block;
+  }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="nav-container">
+    <div class="logo">NexaOrb</div>
+    <button class="nav-toggle" aria-label="Toggle navigation">☰</button>
+    <nav class="nav-links">
+      <ul>
+        <li><a href="#home">Home</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#lifecycle">Service Lifecycle</a></li>
+        <li><a href="#solutions">Solutions</a></li>
+        <li><a href="#challenges">Customer Challenges</a></li>
+        <li><a href="#redhat">Red Hat &amp; OpenShift Services</a></li>
+        <li><a href="#why">Why NexaOrb</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main>
+  <section class="hero" id="home">
+    <div class="hero-content">
+      <p>NexaOrb – Consulting, Enablement, Operational Excellence</p>
+      <h1>Cloud, automation, and AI consulting for regulated, mission-critical enterprises.</h1>
+      <p>NexaOrb unites product-grade engineering, DevOps expertise, and multi-cloud mastery to accelerate modernization, resilience, and value realization across finance, telecom, public sector, and beyond.</p>
+      <div class="cta-group">
+        <button class="btn btn-primary">Talk to an Expert<span>Schedule a Strategy Call</span></button>
+        <button class="btn btn-secondary">Download Service Catalogue<span>Explore Services</span></button>
+      </div>
+    </div>
+  </section>
+  <section id="about">
+    <div class="section-inner">
+      <h2>About NexaOrb</h2>
+      <p class="intro">NexaOrb Consulting Group provides centralized delivery of predefined professional services that drive product adoption, predictable outcomes, and stronger margins at scale. Anchored by cross-functional practices, we embed automation and engineering excellence into every stage of the customer lifecycle.</p>
+      <div class="practice-grid">
+        <article class="card">
+          <h3>NexaOrb Consulting</h3>
+          <p>Infrastructure and platform delivery led by product-focused experts who design, deploy, and optimize multi-cloud architectures, hardened landing zones, and compliant platform stacks.</p>
+        </article>
+        <article class="card">
+          <h3>NexaOrb Center of Engineering (CoE)</h3>
+          <p>Engineering services for integration, automation, DevOps, and extensibility across multi-cloud platforms, third-party ecosystems, and mission-critical workloads within joint delivery programs.</p>
+        </article>
+        <article class="card">
+          <h3>NexaOrb Migration Center</h3>
+          <p>Technology-driven migration services, specialized toolchains, and expert squads that re-host workloads (P2V, V2V, V2C, C2C) across RH OCP, OCP-V, AAP NCP, GCP, AWS, and Azure.</p>
+        </article>
+      </div>
+      <p style="margin-top:1.5rem;">NexaOrb Consulting and the NexaOrb Center of Engineering operate as an integrated force to craft customized multi-cloud solutions, align technology to business objectives, and accelerate value realization through embedded automation, observability, and operational handover.</p>
+    </div>
+  </section>
+  <section id="services">
+    <div class="section-inner">
+      <h2>Service Categories</h2>
+      <p class="intro">NexaOrb CoE services span the entire spectrum of multi-cloud adoption, automation, and extensibility. Each engagement fuses product mastery with actionable delivery playbooks.</p>
+      <div class="services-grid">
+        <article class="card">
+          <h3>Enterprise Integration &amp; Automation</h3>
+          <p>Connects disparate platforms, APIs, and event systems using policy-driven automation patterns that harden governance and auditability.</p>
+        </article>
+        <article class="card">
+          <h3>Product Extension &amp; Augmentation</h3>
+          <p>Builds reusable modules, plug-ins, and orchestration layers to extend vendor products with bespoke capabilities.</p>
+        </article>
+        <article class="card">
+          <h3>DevOps &amp; Cloud Enablement</h3>
+          <p>Delivers CI/CD foundations, GitOps pipelines, and developer enablement kits for high-velocity releases.</p>
+        </article>
+        <article class="card">
+          <h3>Network &amp; Security Automation</h3>
+          <p>Blueprints policy-as-code, programmable edge services, and continuous compliance through automated guardrails.</p>
+        </article>
+        <article class="card">
+          <h3>Value-Added Services for Multi-Cloud</h3>
+          <p>Wraps engineering rigor around service definition, governance, observability, and cost optimization.</p>
+        </article>
+        <article class="card">
+          <h3>Blueprint Center &amp; Upgrade Automation</h3>
+          <p>Codifies reference architectures and orchestrates safe upgrades using rehearsed automation playbooks.</p>
+        </article>
+        <article class="card">
+          <h3>Knowledge Transfer &amp; Enablement</h3>
+          <p>Upskills operations teams with structured enablement paths, runbooks, and guided operations.</p>
+        </article>
+        <article class="card">
+          <h3>Consultancy Services</h3>
+          <p>Strategy-led engagements aligning enterprise roadmaps, governance, and investment sequencing.</p>
+        </article>
+        <article class="card">
+          <h3>Custom Professional Services Support (CPSS)</h3>
+          <p>Rapid-response engineering squads to sustain delivered platforms and embed continuous improvements.</p>
+        </article>
+      </div>
+      <div class="service-meta">
+        <strong>Comprehensive scope:</strong> service definition · project management · solution design &amp; architecture · quality engineering &amp; validation · guides and technical adoption.
+      </div>
+      <div class="tech-strip">
+        <span>vSphere</span>
+        <span>Aria Automation | Orchestrator | Operations</span>
+        <span>vSAN</span>
+        <span>NSX-T</span>
+        <span>Load Balancers</span>
+        <span>JavaScript</span>
+        <span>Java</span>
+        <span>Python</span>
+        <span>PowerShell</span>
+        <span>Jenkins</span>
+        <span>Ansible</span>
+        <span>Terraform</span>
+        <span>Puppet</span>
+        <span>RabbitMQ</span>
+        <span>Kubernetes</span>
+        <span>REST &amp; SOAP</span>
+        <span>Red Hat Enterprise Linux</span>
+        <span>OpenShift (CP &amp; V)</span>
+        <span>Ansible Automation Platform</span>
+        <span>AI &amp; ML Tooling</span>
+      </div>
+    </div>
+  </section>
+  <section id="lifecycle">
+    <div class="section-inner">
+      <h2>Service Lifecycle Framework</h2>
+      <p class="intro">A proven lifecycle ensures every NexaOrb engagement flows from ideation through Day-2 excellence, mitigating risk and accelerating measurable ROI.</p>
+      <div class="lifecycle-steps">
+        <div class="step"><span>1</span>Identify Future Service Opportunities</div>
+        <div class="step"><span>2</span>LoE and SoW</div>
+        <div class="step"><span>3</span>PoC or Piloting</div>
+        <div class="step"><span>4</span>Assessment and Workshop</div>
+        <div class="step"><span>5</span>Architecture Design</div>
+        <div class="step"><span>6</span>Deployment Execution</div>
+        <div class="step"><span>7</span>Deployment Validation</div>
+        <div class="step"><span>8</span>Knowledge Transfer and Handover</div>
+        <div class="step"><span>9</span>Health Check and Optimize (Design Review)</div>
+        <div class="step"><span>10</span>Upgrade/Migration and Managed Service (Day-2)</div>
+      </div>
+      <div class="day-services">
+        <article class="card day-card">
+          <h3>Sample Day 0/1 Services</h3>
+          <ul>
+            <li>Health Check Assessment</li>
+            <li>Design Planning</li>
+            <li>Implementation</li>
+          </ul>
+        </article>
+        <article class="card day-card">
+          <h3>Sample Day 2 Services</h3>
+          <ul>
+            <li>Operational Guidance</li>
+            <li>Onboarding</li>
+            <li>Enablement</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+  <section id="solutions" class="solutions">
+    <div class="section-inner">
+      <h2>Solution Service Catalogue</h2>
+      <p class="intro">Strategic, standard, and emerging solution suites that align to enterprise transformation journeys.</p>
+      <div class="solution-columns">
+        <article class="card">
+          <h3>Strategy &amp; Design Planning</h3>
+          <ul>
+            <li>Assessment Services</li>
+            <li>Design &amp; Implementation Services</li>
+            <li>Optimization / Health Check Services</li>
+            <li>Operational Transformation Consulting</li>
+            <li>Migration Planning &amp; Implementation Services</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>Standard Offerings</h3>
+          <ul>
+            <li>Cloud Infrastructure, Operations &amp; Automation</li>
+            <li>Cloud Native Platform</li>
+            <li>Cloud Networking &amp; Intrinsic Security</li>
+            <li>Cloud Workloads Mobility</li>
+            <li>Technology Adoption / Customer Success</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>Emerging Solutions</h3>
+          <ul>
+            <li>Private AI Foundation</li>
+            <li>Application Modernization</li>
+            <li>Multi-Cloud Solutions</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+  <section id="our-solution">
+    <div class="section-inner">
+      <h2>Our Solution Breakdown</h2>
+      <div class="solution-breakdown">
+        <article class="card">
+          <h3>Standard Offerings</h3>
+          <ul>
+            <li>Private Cloud Platform Design &amp; Implementation (VCF &amp; Red Hat OpenShift / OCP-V)</li>
+            <li>Cloud Infrastructure Lifecycle Management</li>
+            <li>Infrastructure, Logs &amp; Network Management Foundation</li>
+            <li>Enterprise Automation Platform</li>
+            <li>Business Continuity &amp; Disaster Recovery (BCDR)</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>Advanced Services</h3>
+          <ul>
+            <li>Custom Integration with 3rd-party services</li>
+            <li>Infrastructure as Code &amp; configuration management</li>
+            <li>Container management foundation and CI/CD tooling</li>
+            <li>Application modernization, onboarding &amp; development</li>
+            <li>Container monitoring dashboard &amp; observability</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>Ops Handholding</h3>
+          <ul>
+            <li>Day-2 cloud operational advisory</li>
+            <li>Customer success &amp; adoption programs</li>
+            <li>Enablement &amp; training</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>Strategy &amp; Best Practices</h3>
+          <ul>
+            <li>Operational transformation consulting</li>
+            <li>Upgrade &amp; onboarding services</li>
+            <li>Migration Factory / Center for enterprise migration (P2V, V2V, V2C)</li>
+            <li>Health check, design review &amp; optimization services</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+  <section id="challenges">
+    <div class="section-inner">
+      <h2>Customer Operational Challenges</h2>
+      <div class="challenges-grid">
+        <div class="card challenges-list">
+          <ul>
+            <li>Siloed legacy infrastructure restricts agility and inflates operating cost.</li>
+            <li>Disaster recovery and backup gaps expose critical workloads.</li>
+            <li>Complex migrations introduce risk without expert planning.</li>
+            <li>Manual processes slow delivery and raise error rates.</li>
+            <li>Compliance, sovereignty, and security mandates span multi-cloud estates.</li>
+            <li>Legacy applications block modernization and cloud adoption.</li>
+            <li>Multi-cloud governance and visibility challenges.</li>
+            <li>AI/ML initiatives stall due to privacy and skills constraints.</li>
+            <li>Slow technology adoption and lack of best practices.</li>
+          </ul>
+        </div>
+        <div class="card responses-list">
+          <ul>
+            <li>Multi-cloud modernization blueprints with cost-optimized landing zones.</li>
+            <li>Resilient BCDR architecture and sovereign-safe backup automation.</li>
+            <li>NexaOrb Migration Center orchestration with rehearsed runbooks.</li>
+            <li>Automation accelerators, AIOps insights, and workflow digitization.</li>
+            <li>Regulated-industry patterns for government, sovereign, and public cloud.</li>
+            <li>Cloud-native refactoring, containerization, and modernization squads.</li>
+            <li>Centralized governance, observability, and financial stewardship services.</li>
+            <li>Private AI reference architectures with secure MLOps pipelines.</li>
+            <li>Adoption programs, enablement, and embedded customer success.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="redhat">
+    <div class="section-inner">
+      <h2>Red Hat &amp; OpenShift Services</h2>
+      <p class="intro">Certified architects and reliability engineers deliver end-to-end services across OpenShift Container Platform, OpenShift Virtualization, and Ansible Automation Platform.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Phase</th>
+            <th>Representative Services</th>
+            <th>Business Outcomes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Design and Deploy</td>
+            <td>
+              <ul>
+                <li>OpenShift Container Platform Design &amp; Deploy</li>
+                <li>OpenShift Virtualization Design &amp; Deploy</li>
+              </ul>
+            </td>
+            <td>
+              <ul>
+                <li>Accelerated time-to-value and shorter rollouts</li>
+                <li>Reduced risk via standards-based architecture</li>
+              </ul>
+            </td>
+          </tr>
+          <tr>
+            <td>Upgrade</td>
+            <td>
+              <ul>
+                <li>OpenShift CP Upgrade</li>
+                <li>OpenShift V Upgrade</li>
+              </ul>
+            </td>
+            <td>
+              <ul>
+                <li>Rehearsed rollbacks and predictable change windows</li>
+                <li>Improved portability, resilience, and developer velocity</li>
+              </ul>
+            </td>
+          </tr>
+          <tr>
+            <td>Migrate</td>
+            <td>
+              <ul>
+                <li>Virtual Machine Workload Migration to OpenShift Virtualization</li>
+                <li>Container Workload Migration and API modernization</li>
+              </ul>
+            </td>
+            <td>
+              <ul>
+                <li>Auditable, repeatable change processes for compliance</li>
+                <li>Improved SLO/SLA adherence and reduced outage risk</li>
+              </ul>
+            </td>
+          </tr>
+          <tr>
+            <td>Automation</td>
+            <td>
+              <ul>
+                <li>Ansible Automation Platform Design &amp; Deploy</li>
+                <li>AAP Advanced Integration &amp; Customization</li>
+              </ul>
+            </td>
+            <td>
+              <ul>
+                <li>Repeatable automation pipelines and policy enforcement</li>
+                <li>Continuous cost optimization across hybrid estates</li>
+              </ul>
+            </td>
+          </tr>
+          <tr>
+            <td>Operate and Optimize</td>
+            <td>
+              <ul>
+                <li>Reliability Engineering for OpenShift CP, V, and AAP</li>
+              </ul>
+            </td>
+            <td>
+              <ul>
+                <li>Improved resilience, observability, and proactive remediation</li>
+                <li>Embedded runbooks to safeguard uptime and compliance</li>
+              </ul>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <section id="why">
+    <div class="section-inner">
+      <h2>Why NexaOrb</h2>
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div class="why-list">
+          <ul>
+            <li>Deep, source-code-level product knowledge across the stack.</li>
+            <li>Reusable IP and accelerator assets woven into every engagement.</li>
+            <li>Custom professional services support sustaining delivered solutions.</li>
+            <li>Unique mix of software development, architecture, DevOps, and vendor expertise.</li>
+            <li>High-margin delivery models: remote, onsite, or blended teams.</li>
+            <li>NexaOrb Consulting and NexaOrb CoE execute as one unified program team.</li>
+          </ul>
+        </div>
+      </div>
+      <h3>How We Work</h3>
+      <div class="card">
+        <div class="how-list">
+          <ul>
+            <li>Requirements validation workshops narrow the gap between stated and actual needs.</li>
+            <li>Iterative, MVP-first execution delivers incremental value and clear checkpoints.</li>
+            <li>Close partnership with stakeholders secures adoption and operational readiness.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="contact">
+    <div class="section-inner">
+      <h2>Contact NexaOrb</h2>
+      <p class="intro">Share a few details and our consultants will coordinate an expert-led session tailored to your objectives.</p>
+      <form class="contact-form">
+        <input type="text" name="name" placeholder="Name" required>
+        <input type="text" name="company" placeholder="Company" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="tel" name="phone" placeholder="Phone">
+        <select name="interest" required>
+          <option value="">Area of interest</option>
+          <option>Strategy &amp; Design</option>
+          <option>Cloud Infrastructure</option>
+          <option>Migration</option>
+          <option>App Modernization</option>
+          <option>Private AI</option>
+          <option>Red Hat / OpenShift</option>
+        </select>
+        <textarea name="message" placeholder="How can we help?" required></textarea>
+        <button type="submit" class="btn btn-primary">Submit Inquiry</button>
+      </form>
+      <div class="contact-info">
+        <div>📧 contact@nexaorb.com</div>
+        <div>☎ +1 (555) 123-4567</div>
+        <a href="#">Download Service Catalogue (PDF)</a>
+        <a href="#">Book a Workshop</a>
+      </div>
+    </div>
+  </section>
+</main>
+<footer>
+  <div class="footer-inner">
+    <div>NexaOrb</div>
+    <div>© <span id="year"></span> NexaOrb Consulting Group. All rights reserved.</div>
+    <div class="footer-links">
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
+      <a href="#">Cookie Policy</a>
+    </div>
+  </div>
+</footer>
+<script>
+const navToggle = document.querySelector('.nav-toggle');
+const navLinks = document.querySelector('.nav-links');
+navToggle.addEventListener('click', () => {
+  navLinks.classList.toggle('open');
+});
+document.querySelectorAll('a[href^="#"]').forEach(link => {
+  link.addEventListener('click', e => {
+    const targetId = link.getAttribute('href');
+    if (targetId.length > 1) {
+      e.preventDefault();
+      document.querySelector(targetId).scrollIntoView({ behavior: 'smooth' });
+      navLinks.classList.remove('open');
+    }
+  });
+});
+document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
