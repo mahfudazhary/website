@@ -263,8 +263,6 @@ section h2 {
 }
 .solution-columns ul,
 .solution-breakdown ul,
-.challenges-list ul,
-.responses-list ul,
 .why-list ul,
 .how-list ul {
   list-style: none;
@@ -281,15 +279,47 @@ section h2 {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 .challenges-grid {
+  grid-template-columns: 1fr;
+}
+.challenge-row {
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  align-items: start;
 }
-.challenges-list li {
-  margin-bottom: 1rem;
-  font-weight: 600;
+.challenge-col,
+.response-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
-.responses-list li {
-  margin-bottom: 1rem;
+.challenge-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
   color: var(--muted);
+}
+.challenge-header {
+  display: none;
+  font-size: 0.75rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.75rem;
+  gap: 1rem;
+}
+.challenge-header span {
+  display: block;
+  padding: 0 1.5rem;
+}
+@media (min-width: 640px) {
+  .challenge-header {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+  }
+  .challenge-label {
+    display: none;
+  }
 }
 table {
   width: 100%;
@@ -662,33 +692,101 @@ footer {
   <section id="challenges">
     <div class="section-inner">
       <h2>Customer Operational Challenges</h2>
+      <div class="challenge-header">
+        <span>Challenge</span>
+        <span>NexaOrb Response</span>
+      </div>
       <div class="challenges-grid">
-        <div class="card challenges-list">
-          <ul>
-            <li>Siloed legacy infrastructure restricts agility and inflates operating cost.</li>
-            <li>Disaster recovery and backup gaps expose critical workloads.</li>
-            <li>Complex migrations introduce risk without expert planning.</li>
-            <li>Manual processes slow delivery and raise error rates.</li>
-            <li>Compliance, sovereignty, and security mandates span multi-cloud estates.</li>
-            <li>Legacy applications block modernization and cloud adoption.</li>
-            <li>Multi-cloud governance and visibility challenges.</li>
-            <li>AI/ML initiatives stall due to privacy and skills constraints.</li>
-            <li>Slow technology adoption and lack of best practices.</li>
-          </ul>
-        </div>
-        <div class="card responses-list">
-          <ul>
-            <li>Multi-cloud modernization blueprints with cost-optimized landing zones.</li>
-            <li>Resilient BCDR architecture and sovereign-safe backup automation.</li>
-            <li>NexaOrb Migration Center orchestration with rehearsed runbooks.</li>
-            <li>Automation accelerators, AIOps insights, and workflow digitization.</li>
-            <li>Regulated-industry patterns for government, sovereign, and public cloud.</li>
-            <li>Cloud-native refactoring, containerization, and modernization squads.</li>
-            <li>Centralized governance, observability, and financial stewardship services.</li>
-            <li>Private AI reference architectures with secure MLOps pipelines.</li>
-            <li>Adoption programs, enablement, and embedded customer success.</li>
-          </ul>
-        </div>
+        <article class="card challenge-row">
+          <div class="challenge-col">
+            <span class="challenge-label">Challenge</span>
+            <p>Siloed legacy infrastructure restricts agility and inflates operating cost.</p>
+          </div>
+          <div class="response-col">
+            <span class="challenge-label">NexaOrb Response</span>
+            <p>Multi-cloud modernization blueprints with cost-optimized landing zones.</p>
+          </div>
+        </article>
+        <article class="card challenge-row">
+          <div class="challenge-col">
+            <span class="challenge-label">Challenge</span>
+            <p>Disaster recovery and backup gaps expose critical workloads.</p>
+          </div>
+          <div class="response-col">
+            <span class="challenge-label">NexaOrb Response</span>
+            <p>Resilient BCDR architecture and sovereign-safe backup automation.</p>
+          </div>
+        </article>
+        <article class="card challenge-row">
+          <div class="challenge-col">
+            <span class="challenge-label">Challenge</span>
+            <p>Complex migrations introduce risk without expert planning.</p>
+          </div>
+          <div class="response-col">
+            <span class="challenge-label">NexaOrb Response</span>
+            <p>NexaOrb Migration Center orchestration with rehearsed runbooks.</p>
+          </div>
+        </article>
+        <article class="card challenge-row">
+          <div class="challenge-col">
+            <span class="challenge-label">Challenge</span>
+            <p>Manual processes slow delivery and raise error rates.</p>
+          </div>
+          <div class="response-col">
+            <span class="challenge-label">NexaOrb Response</span>
+            <p>Automation accelerators, AIOps insights, and workflow digitization.</p>
+          </div>
+        </article>
+        <article class="card challenge-row">
+          <div class="challenge-col">
+            <span class="challenge-label">Challenge</span>
+            <p>Compliance, sovereignty, and security mandates span multi-cloud estates.</p>
+          </div>
+          <div class="response-col">
+            <span class="challenge-label">NexaOrb Response</span>
+            <p>Regulated-industry patterns for government, sovereign, and public cloud.</p>
+          </div>
+        </article>
+        <article class="card challenge-row">
+          <div class="challenge-col">
+            <span class="challenge-label">Challenge</span>
+            <p>Legacy applications block modernization and cloud adoption.</p>
+          </div>
+          <div class="response-col">
+            <span class="challenge-label">NexaOrb Response</span>
+            <p>Cloud-native refactoring, containerization, and modernization squads.</p>
+          </div>
+        </article>
+        <article class="card challenge-row">
+          <div class="challenge-col">
+            <span class="challenge-label">Challenge</span>
+            <p>Multi-cloud governance and visibility challenges.</p>
+          </div>
+          <div class="response-col">
+            <span class="challenge-label">NexaOrb Response</span>
+            <p>Centralized governance, observability, and financial stewardship services.</p>
+          </div>
+        </article>
+        <article class="card challenge-row">
+          <div class="challenge-col">
+            <span class="challenge-label">Challenge</span>
+            <p>AI/ML initiatives stall due to privacy and skills constraints.</p>
+          </div>
+          <div class="response-col">
+            <span class="challenge-label">NexaOrb Response</span>
+            <p>Private AI reference architectures with secure MLOps pipelines.</p>
+          </div>
+        </article>
+        <article class="card challenge-row">
+          <div class="challenge-col">
+            <span class="challenge-label">Challenge</span>
+            <p>Slow technology adoption and lack of best practices.</p>
+          </div>
+          <div class="response-col">
+            <span class="challenge-label">NexaOrb Response</span>
+            <p>Adoption programs, enablement, and embedded customer success.</p>
+          </div>
+        </article>
       </div>
     </div>
   </section>
