@@ -201,29 +201,52 @@ section h2 {
   border-radius: 999px;
   padding: 0.25rem 0.75rem;
 }
-.lifecycle-steps {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-.step {
-  background: linear-gradient(135deg, #f8fafc, #eef3ff);
-  border-radius: 0.75rem;
-  padding: 1rem;
+.process-workflow {
   border: 1px solid #dde5fb;
+  border-radius: 1.25rem;
+  background: linear-gradient(135deg, #f9fbff, #eef3ff);
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  margin-bottom: 2rem;
+  overflow: visible;
 }
-.step span {
-  display: inline-flex;
-  width: 2rem;
-  height: 2rem;
-  align-items: center;
-  justify-content: center;
+.workflow-track {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  max-width: 100%;
+}
+.workflow-step {
+  background: #ffffff;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  border: 1px solid #dfe6f5;
+  box-shadow: 0 10px 25px rgba(13, 27, 42, 0.06);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+.workflow-marker {
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: 50%;
   background: var(--primary);
   color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 700;
   margin-bottom: 0.5rem;
+}
+.workflow-step p {
+  font-size: 0.95rem;
+  color: var(--dark);
+}
+@media (min-width: 900px) {
+  .workflow-track {
+    grid-template-columns: repeat(3, minmax(220px, 1fr));
+  }
 }
 .day-services {
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -378,7 +401,7 @@ footer {
         <li><a href="#lifecycle">Service Lifecycle</a></li>
         <li><a href="#solutions">Solutions</a></li>
         <li><a href="#challenges">Customer Challenges</a></li>
-        <li><a href="#redhat">Red Hat &amp; OpenShift Services</a></li>
+        <li><a href="#platform">Platform Engineering Services</a></li>
         <li><a href="#why">Why NexaOrb</a></li>
         <li><a href="#contact">Contact</a></li>
       </ul>
@@ -389,7 +412,7 @@ footer {
   <section class="hero" id="home">
     <div class="hero-content">
       <p>NexaOrb – Consulting, Enablement, Operational Excellence</p>
-      <h1>Cloud, automation, and AI consulting for regulated, mission-critical enterprises.</h1>
+      <h1>Cloud, Automation, and AI Consulting for Regulated, Mission-Critical Enterprises.</h1>
       <p>NexaOrb unites product-grade engineering, DevOps expertise, and multi-cloud mastery to accelerate modernization, resilience, and value realization across finance, telecom, public sector, and beyond.</p>
       <div class="cta-group">
         <button class="btn btn-primary">Talk to an Expert<span>Schedule a Strategy Call</span></button>
@@ -412,7 +435,7 @@ footer {
         </article>
         <article class="card">
           <h3>NexaOrb Migration Center</h3>
-          <p>Technology-driven migration services, specialized toolchains, and expert squads that re-host workloads (P2V, V2V, V2C, C2C) across RH OCP, OCP-V, AAP NCP, GCP, AWS, and Azure.</p>
+          <p>Technology-driven migration services, specialized toolchains, and expert squads that re-host workloads (P2V, V2V, V2C, C2C) across leading private, sovereign, and hyperscale cloud platforms.</p>
         </article>
       </div>
       <p style="margin-top:1.5rem;">NexaOrb Consulting and the NexaOrb Center of Engineering operate as an integrated force to craft customized multi-cloud solutions, align technology to business objectives, and accelerate value realization through embedded automation, observability, and operational handover.</p>
@@ -464,26 +487,26 @@ footer {
         <strong>Comprehensive scope:</strong> service definition · project management · solution design &amp; architecture · quality engineering &amp; validation · guides and technical adoption.
       </div>
       <div class="tech-strip">
-        <span>vSphere</span>
-        <span>Aria Automation | Orchestrator | Operations</span>
-        <span>vSAN</span>
-        <span>NSX-T</span>
-        <span>Load Balancers</span>
-        <span>JavaScript</span>
-        <span>Java</span>
-        <span>Python</span>
-        <span>PowerShell</span>
-        <span>Jenkins</span>
-        <span>Ansible</span>
-        <span>Terraform</span>
-        <span>Puppet</span>
-        <span>RabbitMQ</span>
-        <span>Kubernetes</span>
-        <span>REST &amp; SOAP</span>
-        <span>Red Hat Enterprise Linux</span>
-        <span>OpenShift (CP &amp; V)</span>
-        <span>Ansible Automation Platform</span>
-        <span>AI &amp; ML Tooling</span>
+        <span>Enterprise hypervisors</span>
+        <span>Automation &amp; orchestration suites</span>
+        <span>Software-defined storage</span>
+        <span>Programmable network fabrics</span>
+        <span>Adaptive load management</span>
+        <span>Modern scripting languages</span>
+        <span>Enterprise backend languages</span>
+        <span>Event-driven runtimes</span>
+        <span>CI/CD pipelines</span>
+        <span>Infrastructure as Code frameworks</span>
+        <span>Configuration management toolchains</span>
+        <span>Messaging &amp; event streaming</span>
+        <span>Container orchestration platforms</span>
+        <span>API-driven integrations</span>
+        <span>Enterprise Linux distributions</span>
+        <span>Hybrid application platforms</span>
+        <span>Automation control planes</span>
+        <span>Observability &amp; telemetry stacks</span>
+        <span>Data &amp; AI toolchains</span>
+        <span>Security policy engines</span>
       </div>
     </div>
   </section>
@@ -491,17 +514,49 @@ footer {
     <div class="section-inner">
       <h2>Service Lifecycle Framework</h2>
       <p class="intro">A proven lifecycle ensures every NexaOrb engagement flows from ideation through Day-2 excellence, mitigating risk and accelerating measurable ROI.</p>
-      <div class="lifecycle-steps">
-        <div class="step"><span>1</span>Identify Future Service Opportunities</div>
-        <div class="step"><span>2</span>LoE and SoW</div>
-        <div class="step"><span>3</span>PoC or Piloting</div>
-        <div class="step"><span>4</span>Assessment and Workshop</div>
-        <div class="step"><span>5</span>Architecture Design</div>
-        <div class="step"><span>6</span>Deployment Execution</div>
-        <div class="step"><span>7</span>Deployment Validation</div>
-        <div class="step"><span>8</span>Knowledge Transfer and Handover</div>
-        <div class="step"><span>9</span>Health Check and Optimize (Design Review)</div>
-        <div class="step"><span>10</span>Upgrade/Migration and Managed Service (Day-2)</div>
+      <div class="process-workflow">
+        <div class="workflow-track">
+          <div class="workflow-step">
+            <div class="workflow-marker">1</div>
+            <p>Identify Future Service Opportunities</p>
+          </div>
+          <div class="workflow-step">
+            <div class="workflow-marker">2</div>
+            <p>LoE and SoW</p>
+          </div>
+          <div class="workflow-step">
+            <div class="workflow-marker">3</div>
+            <p>PoC or Piloting</p>
+          </div>
+          <div class="workflow-step">
+            <div class="workflow-marker">4</div>
+            <p>Assessment and Workshop</p>
+          </div>
+          <div class="workflow-step">
+            <div class="workflow-marker">5</div>
+            <p>Architecture Design</p>
+          </div>
+          <div class="workflow-step">
+            <div class="workflow-marker">6</div>
+            <p>Deployment Execution</p>
+          </div>
+          <div class="workflow-step">
+            <div class="workflow-marker">7</div>
+            <p>Deployment Validation</p>
+          </div>
+          <div class="workflow-step">
+            <div class="workflow-marker">8</div>
+            <p>Knowledge Transfer and Handover</p>
+          </div>
+          <div class="workflow-step">
+            <div class="workflow-marker">9</div>
+            <p>Health Check and Optimize (Design Review)</p>
+          </div>
+          <div class="workflow-step">
+            <div class="workflow-marker">10</div>
+            <p>Upgrade/Migration and Managed Service (Day-2)</p>
+          </div>
+        </div>
       </div>
       <div class="day-services">
         <article class="card day-card">
@@ -566,7 +621,7 @@ footer {
         <article class="card">
           <h3>Standard Offerings</h3>
           <ul>
-            <li>Private Cloud Platform Design &amp; Implementation (VCF &amp; Red Hat OpenShift / OCP-V)</li>
+            <li>Private cloud platform design &amp; implementation (virtualization and container stacks)</li>
             <li>Cloud Infrastructure Lifecycle Management</li>
             <li>Infrastructure, Logs &amp; Network Management Foundation</li>
             <li>Enterprise Automation Platform</li>
@@ -578,7 +633,7 @@ footer {
           <ul>
             <li>Custom Integration with 3rd-party services</li>
             <li>Infrastructure as Code &amp; configuration management</li>
-            <li>Container management foundation and CI/CD tooling</li>
+            <li>Container management foundation with policy-driven CI/CD tooling</li>
             <li>Application modernization, onboarding &amp; development</li>
             <li>Container monitoring dashboard &amp; observability</li>
           </ul>
@@ -636,10 +691,10 @@ footer {
       </div>
     </div>
   </section>
-  <section id="redhat">
+  <section id="platform">
     <div class="section-inner">
-      <h2>Red Hat &amp; OpenShift Services</h2>
-      <p class="intro">Certified architects and reliability engineers deliver end-to-end services across OpenShift Container Platform, OpenShift Virtualization, and Ansible Automation Platform.</p>
+      <h2>Platform Engineering Services</h2>
+      <p class="intro">Certified architects and reliability engineers deliver end-to-end services across cloud-native platforms, virtualized workloads, and enterprise automation ecosystems without locking customers to any single vendor.</p>
       <table>
         <thead>
           <tr>
@@ -653,8 +708,8 @@ footer {
             <td>Design and Deploy</td>
             <td>
               <ul>
-                <li>OpenShift Container Platform Design &amp; Deploy</li>
-                <li>OpenShift Virtualization Design &amp; Deploy</li>
+                <li>Cloud-native application platform design &amp; deployment</li>
+                <li>Virtualized workload foundation design &amp; deployment</li>
               </ul>
             </td>
             <td>
@@ -668,8 +723,8 @@ footer {
             <td>Upgrade</td>
             <td>
               <ul>
-                <li>OpenShift CP Upgrade</li>
-                <li>OpenShift V Upgrade</li>
+                <li>Platform upgrade runbooks with automated validation</li>
+                <li>Iterative release rehearsal and change orchestration</li>
               </ul>
             </td>
             <td>
@@ -683,8 +738,8 @@ footer {
             <td>Migrate</td>
             <td>
               <ul>
-                <li>Virtual Machine Workload Migration to OpenShift Virtualization</li>
-                <li>Container Workload Migration and API modernization</li>
+                <li>Virtual machine workload migration to modern platforms</li>
+                <li>Container &amp; application migration with API modernization</li>
               </ul>
             </td>
             <td>
@@ -698,8 +753,8 @@ footer {
             <td>Automation</td>
             <td>
               <ul>
-                <li>Ansible Automation Platform Design &amp; Deploy</li>
-                <li>AAP Advanced Integration &amp; Customization</li>
+                <li>Enterprise automation platform design &amp; deployment</li>
+                <li>Advanced integration, policy automation, and governance</li>
               </ul>
             </td>
             <td>
@@ -713,7 +768,8 @@ footer {
             <td>Operate and Optimize</td>
             <td>
               <ul>
-                <li>Reliability Engineering for OpenShift CP, V, and AAP</li>
+                <li>Reliability engineering and proactive operations for cloud platforms</li>
+                <li>Continuous optimization and observability enablement</li>
               </ul>
             </td>
             <td>
@@ -770,7 +826,7 @@ footer {
           <option>Migration</option>
           <option>App Modernization</option>
           <option>Private AI</option>
-          <option>Red Hat / OpenShift</option>
+          <option>Platform Engineering</option>
         </select>
         <textarea name="message" placeholder="How can we help?" required></textarea>
         <button type="submit" class="btn btn-primary">Submit Inquiry</button>
